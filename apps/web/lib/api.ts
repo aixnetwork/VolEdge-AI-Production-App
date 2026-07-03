@@ -2,9 +2,11 @@ import {
   alerts as fallbackAlerts,
   backtestRows as fallbackBacktestRows,
   opportunities as fallbackOpportunities,
+  patternSignals as fallbackPatternSignals,
   riskExposures as fallbackRiskExposures,
   sectors as fallbackSectors,
-  type Opportunity
+  type Opportunity,
+  type PatternInsight
 } from "@/lib/mock-data";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://voledge-ai-api.onrender.com";
@@ -27,7 +29,21 @@ type ApiIntelligence = {
   expected_return: number;
   best_holding_window: string;
   recommendation: Opportunity["recommendation"];
-  pattern: { name: string; direction: "Bullish" | "Bearish" | "Neutral" };
+  pattern: {
+    name: string;
+    direction: "Bullish" | "Bearish" | "Neutral";
+    quality_score?: number;
+    historical_accuracy?: number;
+    confidence_level?: "Low" | "Medium" | "High";
+    chart_score?: number;
+    prediction_score?: number;
+    breakout_probability?: number;
+    breakdown_probability?: number;
+    predicted_move?: string;
+    key_level?: number | null;
+    chart_summary?: string;
+    evidence?: string[];
+  };
   suggested_entry: number;
   suggested_stop_loss: number;
   suggested_target: number;
@@ -215,6 +231,41 @@ export async function getSectorData() {
     signal: item.recommendation,
     strength: formatPercent((item.relative_strength_vs_spy - 50) / 10)
   }));
+}
+
+export async function getPatternData(): Promise<{ patterns: PatternInsight[]; usingFallback: boolean }> {
+  const data = await apiGet<{ opportunities: ApiIntelligence[] }>("/api/radar");
+  if (!data) {
+    return { patterns: fallbackPatternSignals as PatternInsight[], usingFallback: true };
+  }
+
+  const patterns = data.opportunities
+    .map((item) => {
+      const quality = Math.round(item.pattern.quality_score ?? item.vol_edge_score);
+      const historicalAccuracy = Math.round(item.pattern.historical_accuracy ?? item.historical_accuracy);
+      const predictionScore = Math.round(item.pattern.prediction_score ?? item.confidence_score ?? quality);
+      const keyLevel = typeof item.pattern.key_level === "number" ? formatPrice(item.pattern.key_level) : formatPrice(item.suggested_entry);
+      return {
+        symbol: item.symbol,
+        name: item.pattern.name,
+        direction: item.pattern.direction,
+        confidence: item.pattern.confidence_level ?? (item.confidence_level === "Very High" ? "High" : item.confidence_level),
+        quality,
+        historicalAccuracy,
+        predictionScore,
+        breakoutProbability: Math.round(item.pattern.breakout_probability ?? (item.pattern.direction === "Bullish" ? predictionScore : 100 - predictionScore)),
+        breakdownProbability: Math.round(item.pattern.breakdown_probability ?? (item.pattern.direction === "Bearish" ? predictionScore : 100 - predictionScore)),
+        predictedMove: item.pattern.predicted_move ?? (item.pattern.direction === "Bullish" ? "Bullish follow-through" : item.pattern.direction === "Bearish" ? "Bearish follow-through" : "Wait for range break"),
+        keyLevel,
+        currentPrice: formatPrice(item.latest_price ?? item.suggested_entry),
+        evidence: item.pattern.evidence?.length ? item.pattern.evidence : ["pattern evidence pending"],
+        summary: item.pattern.chart_summary ?? item.ai_explanation
+      };
+    })
+    .sort((a, b) => b.predictionScore - a.predictionScore)
+    .slice(0, 8);
+
+  return { patterns, usingFallback: false };
 }
 
 export async function getBacktestData(symbol = "UVIX") {

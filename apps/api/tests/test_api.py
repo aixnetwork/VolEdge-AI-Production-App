@@ -37,6 +37,13 @@ def test_intelligence_endpoint_includes_manual_approval():
     assert body["evidence"]["sample_size"] > 0
     assert body["timeframe_confirmation"]["alignment_score"] >= 0
     assert body["institutional_confirmation"]["confirmation_score"] >= 0
+    assert 0 <= body["pattern"]["chart_score"] <= 100
+    assert 0 <= body["pattern"]["prediction_score"] <= 100
+    assert 0 <= body["pattern"]["breakout_probability"] <= 100
+    assert 0 <= body["pattern"]["breakdown_probability"] <= 100
+    assert body["pattern"]["predicted_move"]
+    assert body["pattern"]["chart_summary"]
+    assert body["pattern"]["evidence"]
     assert body["swing_transition"]["action"] in {"Hold", "Hold -> Buy", "Hold -> Sell"}
     assert 0 <= body["swing_transition"]["transition_score"] <= 100
     assert body["swing_transition"]["trigger_price"] > 0

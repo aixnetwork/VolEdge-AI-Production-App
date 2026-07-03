@@ -44,6 +44,23 @@ export type Opportunity = {
   explanation: string;
 };
 
+export type PatternInsight = {
+  symbol: string;
+  name: string;
+  direction: "Bullish" | "Bearish" | "Neutral";
+  confidence: "High" | "Medium" | "Low";
+  quality: number;
+  historicalAccuracy: number;
+  predictionScore: number;
+  breakoutProbability: number;
+  breakdownProbability: number;
+  predictedMove: string;
+  keyLevel: string;
+  currentPrice: string;
+  evidence: string[];
+  summary: string;
+};
+
 export const opportunities: Opportunity[] = [
   {
     rank: 1,
@@ -242,10 +259,54 @@ export const accuracyBreakdown = [
 ];
 
 export const patternSignals = [
-  { name: "Volatility Expansion", quality: 91, accuracy: 67, confidence: "High", direction: "Bullish" },
-  { name: "Gap Breakout", quality: 84, accuracy: 62, confidence: "Medium", direction: "Bullish" },
-  { name: "Bull Flag", quality: 78, accuracy: 58, confidence: "Medium", direction: "Bullish" },
-  { name: "Ascending Triangle", quality: 73, accuracy: 55, confidence: "Medium", direction: "Bullish" }
+  {
+    symbol: "UVIX",
+    name: "Volatility Expansion",
+    quality: 91,
+    historicalAccuracy: 67,
+    predictionScore: 84,
+    breakoutProbability: 84,
+    breakdownProbability: 8,
+    keyLevel: "14.80",
+    currentPrice: "14.52",
+    predictedMove: "Buy trigger forming",
+    confidence: "High",
+    direction: "Bullish",
+    evidence: ["relative volume 1.28x", "multi-timeframe alignment 83/100", "institutional confirmation 81/100"],
+    summary: "Volatility Expansion has an 84/100 AI chart score with resistance near 14.80."
+  },
+  {
+    symbol: "SOXL",
+    name: "Gap Breakout",
+    quality: 84,
+    historicalAccuracy: 62,
+    predictionScore: 78,
+    breakoutProbability: 78,
+    breakdownProbability: 14,
+    keyLevel: "62.10",
+    currentPrice: "62.42",
+    predictedMove: "Bullish follow-through",
+    confidence: "Medium",
+    direction: "Bullish",
+    evidence: ["price closed above resistance", "relative volume 1.16x", "trend alignment positive"],
+    summary: "Gap Breakout has a 78/100 AI chart score with resistance near 62.10."
+  },
+  {
+    symbol: "IBIT",
+    name: "Pre-Breakout Compression",
+    quality: 79,
+    historicalAccuracy: 59,
+    predictionScore: 76,
+    breakoutProbability: 76,
+    breakdownProbability: 16,
+    keyLevel: "67.40",
+    currentPrice: "67.12",
+    predictedMove: "Buy trigger forming",
+    confidence: "Medium",
+    direction: "Bullish",
+    evidence: ["tight range compression", "rising lows", "crypto ETF trend support"],
+    summary: "Pre-Breakout Compression has a 76/100 AI chart score with resistance near 67.40."
+  }
 ];
 
 export const backtestRows = [

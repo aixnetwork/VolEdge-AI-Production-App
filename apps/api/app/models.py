@@ -114,6 +114,14 @@ class PatternSignal(BaseModel):
     historical_accuracy: float = Field(ge=0, le=100)
     confidence_level: Literal["Low", "Medium", "High"]
     direction: Literal["Bullish", "Bearish", "Neutral"]
+    chart_score: float = Field(default=0, ge=0, le=100)
+    prediction_score: float = Field(default=0, ge=0, le=100)
+    breakout_probability: float = Field(default=0, ge=0, le=100)
+    breakdown_probability: float = Field(default=0, ge=0, le=100)
+    predicted_move: str = "Wait"
+    key_level: float | None = None
+    chart_summary: str = ""
+    evidence: list[str] = Field(default_factory=list)
 
 
 class Intelligence(BaseModel):

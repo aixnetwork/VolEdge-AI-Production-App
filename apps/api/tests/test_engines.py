@@ -42,6 +42,14 @@ def test_pattern_detection_returns_required_metrics():
     pattern = detect_primary_pattern(bars, stats.historical_accuracy)
     assert pattern.name
     assert 0 <= pattern.quality_score <= 100
+    assert 0 <= pattern.chart_score <= 100
+    assert 0 <= pattern.prediction_score <= 100
+    assert 0 <= pattern.breakout_probability <= 100
+    assert 0 <= pattern.breakdown_probability <= 100
+    assert pattern.predicted_move
+    assert pattern.key_level is not None
+    assert pattern.chart_summary
+    assert pattern.evidence
     assert pattern.confidence_level in {"Low", "Medium", "High"}
 
 

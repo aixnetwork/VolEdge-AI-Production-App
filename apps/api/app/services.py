@@ -9,7 +9,7 @@ from .engines.market_regime import classify_market_regime
 from .engines.patterns import detect_primary_pattern
 from .engines.voledge_score import adaptive_factor_weights, score_opportunity
 from .market_data import ETF_UNIVERSE
-from .models import EvidenceReport, Intelligence, Recommendation, SwingTransitionSignal
+from .models import EvidenceReport, Intelligence, PatternSignal, Recommendation, SwingTransitionSignal
 from .providers import get_market_data_provider
 
 
@@ -115,6 +115,7 @@ def _build_intelligence(symbol: str) -> Intelligence:
     )
     confidence_score = _confidence_score(score, accuracy, pattern.quality_score, timeframe.alignment_score, institutional.confirmation_score, market_regime.confidence_modifier)
     risk_score = _risk_score(bars, accuracy.average_drawdown, risk_reward=abs(target - entry) / max(0.01, abs(entry - stop)), market_regime=market_regime.name)
+    pattern = _augment_pattern_prediction(pattern, accuracy.historical_accuracy, timeframe.alignment_score, institutional.confirmation_score, confidence_score)
     transition_entry = _next_transition_trigger(latest.close, entry, atr, pattern.direction, pattern.name)
     swing_transition = _swing_transition_signal(
         latest_close=latest.close,
@@ -289,6 +290,44 @@ def _risk_score(bars, average_drawdown: float, risk_reward: float, market_regime
     regime_risk = 18 if market_regime == "Crisis Mode" else 12 if market_regime in {"Bear Market", "High Volatility"} else 6
     score = atr_percent * 6 + drawdown_risk * 0.35 + rr_risk * 0.35 + regime_risk
     return round(min(100, max(0, score)), 2)
+
+
+def _augment_pattern_prediction(
+    pattern: PatternSignal,
+    historical_accuracy: float,
+    timeframe_alignment: float,
+    institutional_confirmation: float,
+    confidence_score: float,
+) -> PatternSignal:
+    prediction_score = (
+        pattern.chart_score * 0.42
+        + historical_accuracy * 0.18
+        + timeframe_alignment * 0.16
+        + institutional_confirmation * 0.14
+        + confidence_score * 0.10
+    )
+    prediction_score = round(min(100, max(0, prediction_score)), 2)
+    if pattern.direction == "Bullish":
+        breakout_probability = prediction_score
+        breakdown_probability = max(0, 100 - prediction_score - 8)
+    elif pattern.direction == "Bearish":
+        breakdown_probability = prediction_score
+        breakout_probability = max(0, 100 - prediction_score - 8)
+    else:
+        breakout_probability = breakdown_probability = min(54, prediction_score * 0.62)
+    evidence = [
+        *pattern.evidence,
+        f"multi-timeframe alignment {timeframe_alignment:.0f}/100",
+        f"institutional confirmation {institutional_confirmation:.0f}/100",
+    ]
+    return pattern.model_copy(
+        update={
+            "prediction_score": prediction_score,
+            "breakout_probability": round(breakout_probability, 2),
+            "breakdown_probability": round(breakdown_probability, 2),
+            "evidence": evidence[:5],
+        }
+    )
 
 
 def _top_weight_labels(weights: dict[str, float]) -> str:
