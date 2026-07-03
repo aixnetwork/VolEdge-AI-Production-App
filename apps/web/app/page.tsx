@@ -43,8 +43,8 @@ export default async function Home() {
           <div className="mt-5 grid gap-4 border-t border-line pt-5 md:grid-cols-[1fr_0.85fr]">
             <p className="text-base leading-7 text-slate-200">{top.explanation}</p>
             <div className="grid grid-cols-2 gap-3">
-              <Metric label="Entry" value={top.entry} />
-              <Metric label="Stop Loss" value={top.stop} />
+              <Metric label="Trigger" value={top.entry} />
+              <Metric label="Invalidation" value={top.stop} />
               <Metric label="Target" value={top.target} tone="mint" />
               <Metric label="Risk/Reward" value={top.riskReward} tone="amber" />
             </div>

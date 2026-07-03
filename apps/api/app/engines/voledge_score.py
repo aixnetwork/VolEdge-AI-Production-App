@@ -11,16 +11,27 @@ def _atr_score(bars: list[OhlcvBar]) -> float:
     return min(100, max(0, recent_atr / prior_atr * 84))
 
 
-def _momentum_score(bars: list[OhlcvBar]) -> float:
+def _momentum_score(bars: list[OhlcvBar], direction: str) -> float:
     short = bars[-1].close - bars[-10].close
     long = bars[-1].close - bars[-30].close
+    if direction == "Bearish":
+        short = -short
+        long = -long
     return min(100, max(0, 58 + short * 2.6 + long * 1.25))
 
 
 def _risk_reward_score(entry: float, stop: float, target: float) -> float:
-    risk = max(0.01, entry - stop)
-    reward = max(0.01, target - entry)
+    risk = max(0.01, abs(entry - stop))
+    reward = max(0.01, abs(target - entry))
     return min(100, reward / risk * 52)
+
+
+def _setup_timing_score(pattern: PatternSignal) -> float:
+    if pattern.name.startswith("Pre-Breakout") or pattern.name.startswith("Pre-Breakdown"):
+        return 92
+    if pattern.name in {"Breakout", "Gap Breakout", "Breakdown"}:
+        return 76
+    return 64
 
 
 def score_opportunity(
@@ -32,13 +43,15 @@ def score_opportunity(
     target: float,
 ) -> float:
     volatility = _atr_score(bars)
-    momentum = _momentum_score(bars)
+    momentum = _momentum_score(bars, pattern.direction)
     risk_reward = _risk_reward_score(entry, stop, target)
+    setup_timing = _setup_timing_score(pattern)
     score = (
-        accuracy.historical_accuracy * 0.30
-        + pattern.quality_score * 0.25
-        + volatility * 0.20
-        + momentum * 0.15
+        accuracy.historical_accuracy * 0.27
+        + pattern.quality_score * 0.24
+        + volatility * 0.17
+        + momentum * 0.14
         + risk_reward * 0.10
+        + setup_timing * 0.08
     )
     return round(min(100, max(0, score)), 2)

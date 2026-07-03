@@ -10,22 +10,45 @@ from .providers import get_market_data_provider
 
 def build_intelligence(symbol: str) -> Intelligence:
     bars = get_market_data_provider().history(symbol)
-    accuracy = calculate_historical_accuracy(bars, quality_threshold=0.012)
+    baseline_accuracy = calculate_historical_accuracy(bars, quality_threshold=0.012)
+    pattern = detect_primary_pattern(bars, baseline_accuracy.historical_accuracy)
+    accuracy = calculate_historical_accuracy(bars, quality_threshold=0.012, direction=pattern.direction)
     pattern = detect_primary_pattern(bars, accuracy.historical_accuracy)
     latest = bars[-1]
     atr = sum(bar.high - bar.low for bar in bars[-14:]) / 14
-    entry = latest.close
-    stop = entry - atr * 1.15
-    target = entry + atr * 2.2
+    resistance = max(bar.high for bar in bars[-16:-1])
+    support = min(bar.low for bar in bars[-16:-1])
+    if pattern.direction == "Bearish":
+        entry = min(latest.close, support - atr * 0.08) if pattern.name.startswith("Pre-Breakdown") else latest.close
+        stop = max(resistance, entry + atr * 1.05)
+        target = entry - atr * 2.0
+    else:
+        entry = max(latest.close, resistance + atr * 0.08) if pattern.name.startswith("Pre-Breakout") else latest.close
+        stop = min(support, entry - atr * 1.05)
+        target = entry + atr * 2.2
     score = score_opportunity(bars, accuracy, pattern, entry, stop, target)
-    recommendation = Recommendation.EXTREME_BUY if score >= 85 else Recommendation.STRONG_BUY if score >= 73 else Recommendation.WATCH
+    if pattern.direction == "Bearish":
+        recommendation = Recommendation.STRONG_SELL if score >= 73 else Recommendation.HEDGE if score >= 62 else Recommendation.WATCH
+    elif pattern.direction == "Neutral":
+        recommendation = Recommendation.WATCH
+    else:
+        recommendation = Recommendation.EXTREME_BUY if score >= 85 else Recommendation.STRONG_BUY if score >= 73 else Recommendation.WATCH
     confidence_level = "Very High" if score >= 88 and accuracy.historical_accuracy >= 65 else pattern.confidence_level
-    risk_reward = (target - entry) / max(0.01, entry - stop)
+    risk_reward = abs(target - entry) / max(0.01, abs(entry - stop))
     category = ETF_UNIVERSE[symbol][0]
+    trigger_label = (
+        "sell trigger below support"
+        if pattern.direction == "Bearish"
+        else "buy trigger above resistance"
+        if pattern.direction == "Bullish"
+        else "watch trigger near the current range"
+    )
+    setup_stage = "early setup" if pattern.name.startswith("Pre-") else "confirmed move"
     explanation = (
-        f"{symbol} ranks highly because its {pattern.name.lower()} setup has a "
+        f"{symbol} is a {setup_stage} with a {trigger_label} near {entry:.2f}. "
+        f"Its {pattern.name.lower()} has a "
         f"{pattern.quality_score:.0f}/100 pattern quality score, {accuracy.historical_accuracy:.0f}% "
-        f"historical accuracy across {accuracy.matching_setups} matching setups, and a calculated "
+        f"directional historical accuracy across {accuracy.matching_setups} matching setups, and a calculated "
         f"{accuracy.expected_return:.2f}% expected return over the best window."
     )
     return Intelligence(

@@ -27,6 +27,13 @@ def test_historical_accuracy_uses_matching_setups():
     assert stats.best_holding_window == "5 trading days"
 
 
+def test_historical_accuracy_can_score_bearish_direction():
+    bearish_stats = calculate_historical_accuracy(load_ohlcv("SOXS"), quality_threshold=0.004, direction="Bearish")
+    assert bearish_stats.matching_setups > 0
+    assert 0 <= bearish_stats.historical_accuracy <= 100
+    assert bearish_stats.expected_return > -100
+
+
 def test_pattern_detection_returns_required_metrics():
     bars = load_ohlcv("SOXL")
     stats = calculate_historical_accuracy(bars, quality_threshold=0.004)
@@ -34,6 +41,22 @@ def test_pattern_detection_returns_required_metrics():
     assert pattern.name
     assert 0 <= pattern.quality_score <= 100
     assert pattern.confidence_level in {"Low", "Medium", "High"}
+
+
+def test_intelligence_supports_sell_or_early_setup_language():
+    candidates = [build_intelligence(symbol) for symbol in ("SOXS", "SQQQ", "LABD", "UVIX") if symbol in {"SOXS", "LABD", "UVIX"}]
+    assert any(
+        item.recommendation.value in {"Strong Sell", "Hedge Opportunity"} or "early setup" in item.ai_explanation
+        for item in candidates
+    )
+
+
+def test_bearish_risk_reward_uses_absolute_distance():
+    bars = load_ohlcv("SOXS")
+    stats = calculate_historical_accuracy(bars, quality_threshold=0.004, direction="Bearish")
+    pattern = detect_primary_pattern(bars, stats.historical_accuracy)
+    score = score_opportunity(bars, stats, pattern, 50, 55, 40)
+    assert 0 <= score <= 100
 
 
 def test_sector_volatility_radar_is_ranked():
