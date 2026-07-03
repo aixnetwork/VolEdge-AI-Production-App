@@ -1,45 +1,19 @@
 import Link from "next/link";
-import { Activity, Bell, Gauge, History, LineChart, Radar, Settings, ShieldCheck, Star, Waves } from "lucide-react";
 import { referenceTaglines } from "@/lib/mock-data";
-
-const navItems = [
-  { href: "/", label: "Radar", icon: Radar },
-  { href: "/etf/UVIX", label: "ETF", icon: Gauge },
-  { href: "/sectors", label: "Sectors", icon: Activity },
-  { href: "/accuracy", label: "Accuracy", icon: History },
-  { href: "/patterns", label: "Patterns", icon: Waves },
-  { href: "/backtest", label: "Backtest", icon: LineChart },
-  { href: "/alerts", label: "Alerts", icon: Bell },
-  { href: "/watchlist", label: "Watchlist", icon: Star },
-  { href: "/risk", label: "Risk", icon: ShieldCheck },
-  { href: "/settings", label: "Settings", icon: Settings }
-];
+import { SidebarNav } from "@/components/SidebarNav";
 
 export function AppShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <main className="min-h-screen">
-      <aside className="fixed inset-y-0 left-0 hidden w-24 border-r border-line bg-ink/85 px-3 py-5 backdrop-blur lg:block">
-        <Link href="/" className="mb-7 grid h-12 place-items-center rounded bg-mint text-lg font-black text-ink">
-          V
+      <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-line bg-ink/90 px-4 py-5 backdrop-blur lg:block">
+        <Link href="/" className="mb-7 flex h-12 items-center gap-3 rounded bg-mint px-3 text-ink">
+          <span className="grid h-7 w-7 place-items-center rounded bg-ink text-sm font-black text-mint">V</span>
+          <span className="text-sm font-black">VolEdge AI</span>
         </Link>
-        <nav className="grid gap-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="grid h-12 place-items-center rounded border border-transparent text-steel hover:border-line hover:text-white"
-                title={item.label}
-              >
-                <Icon size={20} />
-              </Link>
-            );
-          })}
-        </nav>
+        <SidebarNav />
       </aside>
 
-      <section className="mx-auto max-w-7xl px-4 py-5 lg:pl-32">
+      <section className="mx-auto max-w-7xl px-4 py-5 lg:pl-64">
         <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-mint">VolEdge AI</div>

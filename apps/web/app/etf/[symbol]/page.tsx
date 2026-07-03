@@ -68,6 +68,8 @@ export default async function EtfDetail({ params }: { params: { symbol: string }
         <div className="rounded border border-line bg-panel/80 p-5">
           <h2 className="text-lg font-bold">Trade Plan</h2>
           <div className="mt-4 grid gap-4">
+            <Metric label="Swing Transition" value={opportunity.transitionAction ?? "Hold"} tone={opportunity.transitionStatus === "Arming" ? "mint" : undefined} />
+            <Metric label="Transition Score" value={String(opportunity.transitionScore ?? 0)} tone="mint" />
             <Metric label="Latest Price" value={opportunity.currentPrice} />
             <Metric label="Suggested Entry" value={opportunity.entry} />
             <Metric label="Suggested Stop Loss" value={opportunity.stop} />

@@ -99,6 +99,15 @@ class EvidenceReport(BaseModel):
     best_holding_period: str
 
 
+class SwingTransitionSignal(BaseModel):
+    action: Literal["Hold", "Hold -> Buy", "Hold -> Sell"]
+    status: Literal["Waiting", "Arming", "Triggered", "Invalidated"]
+    transition_score: float = Field(ge=0, le=100)
+    trigger_price: float
+    trigger_gap_percent: float
+    reason: str
+
+
 class PatternSignal(BaseModel):
     name: str
     quality_score: float = Field(ge=0, le=100)
@@ -134,6 +143,7 @@ class Intelligence(BaseModel):
     evidence: EvidenceReport
     timeframe_confirmation: MultiTimeframeConfirmation
     institutional_confirmation: InstitutionalConfirmation
+    swing_transition: SwingTransitionSignal
     adaptive_weights: dict[str, float]
     ai_explanation: str
     manual_approval_required: bool = True

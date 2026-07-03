@@ -47,6 +47,14 @@ type ApiIntelligence = {
   };
   timeframe_confirmation?: { alignment_score: number };
   institutional_confirmation?: { confirmation_score: number };
+  swing_transition?: {
+    action: "Hold" | "Hold -> Buy" | "Hold -> Sell";
+    status: "Waiting" | "Arming" | "Triggered" | "Invalidated";
+    transition_score: number;
+    trigger_price: number;
+    trigger_gap_percent: number;
+    reason: string;
+  };
   adaptive_weights?: Record<string, number>;
   ai_explanation: string;
 };
@@ -133,6 +141,12 @@ function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
     timeframeAlignment: Math.round(item.timeframe_confirmation?.alignment_score ?? 0),
     institutionalScore: Math.round(item.institutional_confirmation?.confirmation_score ?? 0),
     adaptiveWeightSummary: summarizeWeights(item.adaptive_weights),
+    transitionAction: item.swing_transition?.action ?? "Hold",
+    transitionStatus: item.swing_transition?.status ?? "Waiting",
+    transitionScore: Math.round(item.swing_transition?.transition_score ?? 0),
+    transitionTrigger: item.swing_transition ? formatPrice(item.swing_transition.trigger_price) : item.suggested_entry.toFixed(2),
+    triggerGap: `${(item.swing_transition?.trigger_gap_percent ?? 0).toFixed(1)}%`,
+    transitionReason: item.swing_transition?.reason ?? "No directional transition is active yet.",
     recommendation: item.recommendation,
     action,
     triggerSide,

@@ -6,7 +6,7 @@ from .engines.market_regime import classify_market_regime
 from .engines.patterns import detect_primary_pattern
 from .engines.voledge_score import adaptive_factor_weights, score_opportunity
 from .market_data import ETF_UNIVERSE
-from .models import EvidenceReport, Intelligence, Recommendation
+from .models import EvidenceReport, Intelligence, Recommendation, SwingTransitionSignal
 from .providers import get_market_data_provider
 
 
@@ -95,6 +95,17 @@ def build_intelligence(symbol: str) -> Intelligence:
     )
     confidence_score = _confidence_score(score, accuracy, pattern.quality_score, timeframe.alignment_score, institutional.confirmation_score, market_regime.confidence_modifier)
     risk_score = _risk_score(bars, accuracy.average_drawdown, risk_reward=abs(target - entry) / max(0.01, abs(entry - stop)), market_regime=market_regime.name)
+    transition_entry = _next_transition_trigger(latest.close, entry, atr, pattern.direction, pattern.name)
+    swing_transition = _swing_transition_signal(
+        latest_close=latest.close,
+        entry=transition_entry,
+        stop=stop,
+        pattern_direction=pattern.direction,
+        accuracy=accuracy.historical_accuracy,
+        confidence_score=confidence_score,
+        timeframe_alignment=timeframe.alignment_score,
+        institutional_confirmation=institutional.confirmation_score,
+    )
     if pattern.direction == "Bearish":
         recommendation = Recommendation.STRONG_SELL if score >= 73 else Recommendation.HEDGE if score >= 62 else Recommendation.WATCH
     elif pattern.direction == "Neutral":
@@ -178,6 +189,7 @@ def build_intelligence(symbol: str) -> Intelligence:
         evidence=evidence,
         timeframe_confirmation=timeframe,
         institutional_confirmation=institutional,
+        swing_transition=swing_transition,
         adaptive_weights=adaptive_weights,
         ai_explanation=explanation,
     )
@@ -242,3 +254,78 @@ def _top_weight_labels(weights: dict[str, float]) -> str:
     }
     top = sorted(weights.items(), key=lambda item: item[1], reverse=True)[:3]
     return ", ".join(labels.get(name, name) for name, _ in top)
+
+
+def _swing_transition_signal(
+    latest_close: float,
+    entry: float,
+    stop: float,
+    pattern_direction: str,
+    accuracy: float,
+    confidence_score: float,
+    timeframe_alignment: float,
+    institutional_confirmation: float,
+) -> SwingTransitionSignal:
+    if pattern_direction == "Neutral":
+        return SwingTransitionSignal(
+            action="Hold",
+            status="Waiting",
+            transition_score=0,
+            trigger_price=round(latest_close, 2),
+            trigger_gap_percent=0,
+            reason="No directional transition is active yet.",
+        )
+
+    if pattern_direction == "Bearish":
+        action = "Hold -> Sell"
+        trigger_gap = (latest_close - entry) / max(0.01, latest_close) * 100
+        triggered = latest_close <= entry
+        invalidated = latest_close >= stop
+        direction_word = "sell"
+    else:
+        action = "Hold -> Buy"
+        trigger_gap = (entry - latest_close) / max(0.01, latest_close) * 100
+        triggered = latest_close >= entry
+        invalidated = latest_close <= stop
+        direction_word = "buy"
+
+    proximity_score = max(0, 100 - min(100, abs(trigger_gap) * 32))
+    transition_score = (
+        accuracy * 0.38
+        + confidence_score * 0.22
+        + timeframe_alignment * 0.14
+        + institutional_confirmation * 0.14
+        + proximity_score * 0.12
+    )
+    if invalidated:
+        status = "Invalidated"
+    elif triggered:
+        status = "Triggered"
+    elif transition_score >= 68 and accuracy >= 60 and abs(trigger_gap) <= 2.8:
+        status = "Arming"
+    else:
+        status = "Waiting"
+
+    reason = (
+        f"Hold until the {direction_word} trigger confirms. "
+        f"The setup is {abs(trigger_gap):.2f}% from trigger with {accuracy:.0f}% historical accuracy "
+        f"and {confidence_score:.0f}/100 confidence."
+    )
+    return SwingTransitionSignal(
+        action=action,
+        status=status,
+        transition_score=round(min(100, max(0, transition_score)), 2),
+        trigger_price=round(entry, 2),
+        trigger_gap_percent=round(trigger_gap, 2),
+        reason=reason,
+    )
+
+
+def _next_transition_trigger(latest_close: float, suggested_entry: float, atr: float, direction: str, pattern_name: str) -> float:
+    if pattern_name.startswith("Pre-"):
+        return suggested_entry
+    if direction == "Bearish":
+        return min(suggested_entry, latest_close - atr * 0.35)
+    if direction == "Bullish":
+        return max(suggested_entry, latest_close + atr * 0.35)
+    return latest_close

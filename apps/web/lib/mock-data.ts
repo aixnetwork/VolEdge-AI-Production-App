@@ -27,6 +27,12 @@ export type Opportunity = {
   timeframeAlignment?: number;
   institutionalScore?: number;
   adaptiveWeightSummary?: string;
+  transitionAction?: "Hold" | "Hold -> Buy" | "Hold -> Sell";
+  transitionStatus?: "Waiting" | "Arming" | "Triggered" | "Invalidated";
+  transitionScore?: number;
+  transitionTrigger?: string;
+  triggerGap?: string;
+  transitionReason?: string;
   recommendation: "Extreme Buy" | "Strong Buy" | "Watch" | "Strong Sell" | "Hedge Opportunity";
   action: "Buy" | "Sell" | "Watch";
   triggerSide: "High Trigger" | "Low Trigger" | "Range Trigger";
@@ -68,6 +74,12 @@ export const opportunities: Opportunity[] = [
     timeframeAlignment: 83,
     institutionalScore: 81,
     adaptiveWeightSummary: "historical accuracy, volatility expansion, trend alignment",
+    transitionAction: "Hold -> Buy",
+    transitionStatus: "Arming",
+    transitionScore: 82,
+    transitionTrigger: "14.80",
+    triggerGap: "1.4%",
+    transitionReason: "Hold until the buy trigger confirms. The setup is 1.4% from trigger with high historical accuracy.",
     recommendation: "Extreme Buy",
     action: "Buy",
     triggerSide: "High Trigger",

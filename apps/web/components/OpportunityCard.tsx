@@ -47,6 +47,15 @@ export function OpportunityCard({ item }: { item: Opportunity }) {
           <div className="font-bold text-white">{item.window}</div>
         </div>
       </div>
+      {item.transitionAction && item.transitionAction !== "Hold" ? (
+        <div className="mt-3 rounded border border-line bg-ink/40 p-3 text-sm">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-bold text-white">{item.transitionAction}</span>
+            <span className={item.transitionStatus === "Arming" ? "font-bold text-mint" : "font-bold text-steel"}>{item.transitionStatus}</span>
+          </div>
+          <div className="mt-1 text-xs text-steel">Trigger gap {item.triggerGap} / score {item.transitionScore}</div>
+        </div>
+      ) : null}
       <Link href={`/etf/${item.symbol}`} className="mt-4 inline-flex h-10 items-center rounded bg-mint px-4 text-sm font-bold text-ink">
         Open Detail
       </Link>

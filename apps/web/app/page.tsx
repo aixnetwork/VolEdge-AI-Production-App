@@ -9,6 +9,13 @@ import { productArchitecture, referenceTaglines } from "@/lib/mock-data";
 export default async function Home() {
   const [{ top, opportunities, usingFallback }, sectors] = await Promise.all([getRadarData(), getSectorData()]);
   const topTriggers = opportunities.slice(0, 5);
+  const swingTransition =
+    [...opportunities]
+      .filter((item) => item.transitionAction && item.transitionAction !== "Hold" && item.transitionStatus !== "Triggered" && item.transitionStatus !== "Invalidated")
+      .sort((a, b) => {
+        const statusBoost = (b.transitionStatus === "Arming" ? 100 : 0) - (a.transitionStatus === "Arming" ? 100 : 0);
+        return statusBoost || (b.transitionScore ?? 0) - (a.transitionScore ?? 0);
+      })[0] ?? top;
 
   return (
     <AppShell title="Opportunity Radar">
@@ -17,6 +24,25 @@ export default async function Home() {
           Demo data is active. Set NEXT_PUBLIC_API_BASE_URL to connect live API intelligence.
         </div>
       ) : null}
+      <section className="mb-5 rounded border border-mint/35 bg-panel/95 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="text-sm uppercase tracking-wide text-steel">Next Swing Transition</div>
+            <div className="mt-1 flex flex-wrap items-end gap-3">
+              <span className="text-5xl font-black">{swingTransition.symbol}</span>
+              <span className="pb-1 text-2xl font-black text-mint">{swingTransition.transitionAction ?? swingTransition.action}</span>
+              <span className="mb-1 rounded border border-line px-2 py-1 text-xs font-bold uppercase text-steel">{swingTransition.transitionStatus ?? "Waiting"}</span>
+            </div>
+            <p className="mt-3 max-w-3xl text-base leading-7 text-slate-200">{swingTransition.transitionReason ?? swingTransition.explanation}</p>
+          </div>
+          <div className="grid min-w-[260px] grid-cols-2 gap-4">
+            <Metric label="Transition Score" value={String(swingTransition.transitionScore ?? swingTransition.score)} tone="mint" />
+            <Metric label="Historical Accuracy" value={`${swingTransition.accuracy}%`} tone="amber" />
+            <Metric label="Trigger Gap" value={swingTransition.triggerGap ?? "0.0%"} />
+            <Metric label="Trigger Price" value={swingTransition.transitionTrigger ?? swingTransition.entry} />
+          </div>
+        </div>
+      </section>
       <section className="mb-5 rounded border border-line bg-panel/90 p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
