@@ -7,7 +7,7 @@ import {
   type Opportunity
 } from "@/lib/mock-data";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://voledge-ai-api.onrender.com";
 
 type ApiIntelligence = {
   symbol: string;
