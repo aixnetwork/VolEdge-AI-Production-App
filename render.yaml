@@ -20,3 +20,5 @@ services:
         value: yfinance
       - key: CORS_ORIGINS
         value: https://vol-edge-ai-production-app-web.vercel.app
+      - key: CACHE_TTL_SECONDS
+        value: "600"

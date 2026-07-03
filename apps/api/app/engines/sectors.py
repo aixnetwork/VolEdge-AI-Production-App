@@ -2,22 +2,23 @@ from __future__ import annotations
 
 from time import monotonic
 
+from ..config import get_settings
 from ..market_data import ETF_UNIVERSE
 from ..models import Recommendation, SectorSignal
 from ..providers import get_market_data_provider
 
 
 SECTOR_SYMBOLS = ["XLK", "SOXX", "GLD", "SLV", "GDX", "EEM", "XLF", "XLE", "XBI", "IWM", "IBIT", "ETHA"]
-CACHE_TTL_SECONDS = 60
+CACHE_TTL_SECONDS = get_settings().cache_ttl_seconds
 _sector_signal_cache: dict[str, tuple[float, SectorSignal]] = {}
 _sector_radar_cache: tuple[float, list[SectorSignal]] | None = None
 
 
-def calculate_sector_signal(symbol: str) -> SectorSignal:
+def calculate_sector_signal(symbol: str, force_refresh: bool = False) -> SectorSignal:
     normalized_symbol = symbol.upper()
     cached = _sector_signal_cache.get(normalized_symbol)
     now = monotonic()
-    if cached and now - cached[0] < CACHE_TTL_SECONDS:
+    if cached and not force_refresh and now - cached[0] < CACHE_TTL_SECONDS:
         return cached[1]
 
     signal = _calculate_sector_signal(normalized_symbol)
@@ -64,13 +65,13 @@ def _calculate_sector_signal(symbol: str) -> SectorSignal:
     )
 
 
-def sector_radar() -> list[SectorSignal]:
+def sector_radar(force_refresh: bool = False) -> list[SectorSignal]:
     global _sector_radar_cache
 
     now = monotonic()
-    if _sector_radar_cache and now - _sector_radar_cache[0] < CACHE_TTL_SECONDS:
+    if _sector_radar_cache and not force_refresh and now - _sector_radar_cache[0] < CACHE_TTL_SECONDS:
         return _sector_radar_cache[1]
 
-    ranked = sorted((calculate_sector_signal(symbol) for symbol in SECTOR_SYMBOLS), key=lambda item: item.sector_volatility_score, reverse=True)
+    ranked = sorted((calculate_sector_signal(symbol, force_refresh=force_refresh) for symbol in SECTOR_SYMBOLS), key=lambda item: item.sector_volatility_score, reverse=True)
     _sector_radar_cache = (now, ranked)
     return ranked

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from time import monotonic
 
+from .config import get_settings
 from .engines.accuracy import calculate_historical_accuracy
 from .engines.confirmation import build_institutional_confirmation, build_timeframe_confirmation
 from .engines.market_regime import classify_market_regime
@@ -43,16 +44,17 @@ RADAR_PRIORITY_SYMBOLS = [
     "ETHW",
 ]
 
-CACHE_TTL_SECONDS = 60
+settings = get_settings()
+CACHE_TTL_SECONDS = settings.cache_ttl_seconds
 _intelligence_cache: dict[str, tuple[float, Intelligence]] = {}
 _radar_cache: tuple[float, list[Intelligence]] | None = None
 
 
-def build_intelligence(symbol: str) -> Intelligence:
+def build_intelligence(symbol: str, force_refresh: bool = False) -> Intelligence:
     normalized_symbol = symbol.upper()
     cached = _intelligence_cache.get(normalized_symbol)
     now = monotonic()
-    if cached and now - cached[0] < CACHE_TTL_SECONDS:
+    if cached and not force_refresh and now - cached[0] < CACHE_TTL_SECONDS:
         return cached[1]
 
     intelligence = _build_intelligence(normalized_symbol)
@@ -213,11 +215,11 @@ def _build_intelligence(symbol: str) -> Intelligence:
     )
 
 
-def opportunity_radar() -> list[Intelligence]:
+def opportunity_radar(force_refresh: bool = False) -> list[Intelligence]:
     global _radar_cache
 
     now = monotonic()
-    if _radar_cache and now - _radar_cache[0] < CACHE_TTL_SECONDS:
+    if _radar_cache and not force_refresh and now - _radar_cache[0] < CACHE_TTL_SECONDS:
         return _radar_cache[1]
 
     opportunities = []
@@ -225,7 +227,7 @@ def opportunity_radar() -> list[Intelligence]:
         if symbol not in ETF_UNIVERSE:
             continue
         try:
-            opportunities.append(build_intelligence(symbol))
+            opportunities.append(build_intelligence(symbol, force_refresh=force_refresh))
         except Exception:
             continue
     if not opportunities:
@@ -233,6 +235,29 @@ def opportunity_radar() -> list[Intelligence]:
     ranked = sorted(opportunities, key=lambda item: item.vol_edge_score, reverse=True)
     _radar_cache = (now, ranked)
     return ranked
+
+
+def warm_intelligence_cache() -> dict[str, int | float | str]:
+    started = monotonic()
+    opportunities = opportunity_radar(force_refresh=True)
+    return {
+        "status": "warm",
+        "symbols": len(opportunities),
+        "top_symbol": opportunities[0].symbol if opportunities else "",
+        "elapsed_ms": round((monotonic() - started) * 1000),
+        "cache_ttl_seconds": CACHE_TTL_SECONDS,
+    }
+
+
+def intelligence_cache_status() -> dict[str, int | float | bool]:
+    now = monotonic()
+    radar_age = round(now - _radar_cache[0], 2) if _radar_cache else None
+    return {
+        "cache_ttl_seconds": CACHE_TTL_SECONDS,
+        "radar_ready": _radar_cache is not None,
+        "radar_age_seconds": radar_age,
+        "intelligence_symbols": len(_intelligence_cache),
+    }
 
 
 def _confidence_score(

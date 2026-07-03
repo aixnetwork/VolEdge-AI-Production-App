@@ -14,7 +14,7 @@ from .engines.sectors import calculate_sector_signal, sector_radar
 from .market_data import ETF_UNIVERSE
 from .models import Alert, AlertCreate, WatchlistAdd
 from .providers import ProviderNotConfiguredError, get_market_data_provider
-from .services import build_intelligence, opportunity_radar
+from .services import build_intelligence, intelligence_cache_status, opportunity_radar, warm_intelligence_cache
 from .storage import store
 
 settings = get_settings()
@@ -48,7 +48,24 @@ def status() -> dict[str, str | bool | list[str]]:
         "market_data": settings.market_data_provider,
         "store_backend": settings.store_backend,
         "trading_enabled": settings.trading_enabled,
+        "cache_ttl_seconds": settings.cache_ttl_seconds,
         "cors_origins": settings.cors_origins,
+    }
+
+
+@app.get("/api/cache/status")
+def cache_status():
+    return intelligence_cache_status()
+
+
+@app.get("/api/cache/warm")
+def cache_warm():
+    intelligence_status = warm_intelligence_cache()
+    sectors = sector_radar(force_refresh=True)
+    return {
+        **intelligence_status,
+        "sector_symbols": len(sectors),
+        "top_sector_symbol": sectors[0].symbol if sectors else "",
     }
 
 

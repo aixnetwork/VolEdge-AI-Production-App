@@ -13,6 +13,16 @@ def test_radar_endpoint_returns_top_opportunity():
     assert body["top_opportunity"]["vol_edge_score"] >= body["opportunities"][-1]["vol_edge_score"]
 
 
+def test_cache_warm_endpoint_primes_radar_cache():
+    response = client.get("/api/cache/warm")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "warm"
+    assert body["symbols"] > 0
+    assert body["sector_symbols"] > 0
+    assert body["cache_ttl_seconds"] >= 60
+
+
 def test_intelligence_endpoint_includes_manual_approval():
     response = client.get("/api/intelligence/UVIX")
     assert response.status_code == 200

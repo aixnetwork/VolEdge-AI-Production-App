@@ -17,6 +17,7 @@ class Settings:
         self.supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
         self.supabase_service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
         self.trading_enabled = os.getenv("TRADING_ENABLED", "false").lower() == "true"
+        self.cache_ttl_seconds = _parse_int(os.getenv("CACHE_TTL_SECONDS", "600"), 600)
         self.cors_origins = _parse_csv(
             os.getenv(
                 "CORS_ORIGINS",
@@ -27,6 +28,13 @@ class Settings:
 
 def _parse_csv(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _parse_int(value: str, fallback: int) -> int:
+    try:
+        return int(value)
+    except ValueError:
+        return fallback
 
 
 @lru_cache
