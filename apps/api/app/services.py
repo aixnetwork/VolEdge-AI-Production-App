@@ -8,6 +8,28 @@ from .models import Intelligence, Recommendation
 from .providers import get_market_data_provider
 
 
+RADAR_PRIORITY_SYMBOLS = [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "XLK",
+    "SOXX",
+    "SOXL",
+    "SOXS",
+    "UVIX",
+    "VIXY",
+    "SVIX",
+    "GLD",
+    "SLV",
+    "GDX",
+    "XLF",
+    "XLE",
+    "XBI",
+    "LABU",
+    "LABD",
+]
+
+
 def build_intelligence(symbol: str) -> Intelligence:
     bars = get_market_data_provider().history(symbol)
     baseline_accuracy = calculate_historical_accuracy(bars, quality_threshold=0.012)
@@ -71,4 +93,14 @@ def build_intelligence(symbol: str) -> Intelligence:
 
 
 def opportunity_radar() -> list[Intelligence]:
-    return sorted((build_intelligence(symbol) for symbol in ETF_UNIVERSE), key=lambda item: item.vol_edge_score, reverse=True)
+    opportunities = []
+    for symbol in RADAR_PRIORITY_SYMBOLS:
+        if symbol not in ETF_UNIVERSE:
+            continue
+        try:
+            opportunities.append(build_intelligence(symbol))
+        except Exception:
+            continue
+    if not opportunities:
+        opportunities = [build_intelligence(symbol) for symbol in ("SPY", "QQQ", "GLD")]
+    return sorted(opportunities, key=lambda item: item.vol_edge_score, reverse=True)

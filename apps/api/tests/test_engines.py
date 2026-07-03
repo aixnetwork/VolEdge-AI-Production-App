@@ -9,6 +9,7 @@ from apps.api.app.market_data import load_ohlcv
 from apps.api.app.models import Alert
 from apps.api.app.providers import FinnhubMarketDataProvider, PolygonMarketDataProvider, ProviderNotConfiguredError, TwelveDataMarketDataProvider
 from apps.api.app.services import build_intelligence
+from apps.api.app.services import opportunity_radar
 from apps.api.app.storage import InMemoryStore
 
 
@@ -63,6 +64,22 @@ def test_sector_volatility_radar_is_ranked():
     sectors = sector_radar()
     assert len(sectors) >= 5
     assert sectors[0].sector_volatility_score >= sectors[-1].sector_volatility_score
+
+
+def test_opportunity_radar_skips_failed_symbols(monkeypatch):
+    from apps.api.app import services
+
+    original = services.build_intelligence
+
+    def flaky_build(symbol: str):
+        if symbol == "SPY":
+            raise RuntimeError("provider hiccup")
+        return original(symbol)
+
+    monkeypatch.setattr(services, "build_intelligence", flaky_build)
+    radar = opportunity_radar()
+    assert radar
+    assert radar[0].vol_edge_score >= radar[-1].vol_edge_score
 
 
 def test_alert_generation_evaluates_score_condition():
