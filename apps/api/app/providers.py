@@ -174,6 +174,54 @@ class FinnhubMarketDataProvider:
         )
 
 
+class YFinanceMarketDataProvider:
+    def history(self, symbol: str, bars: int = 140) -> list[OhlcvBar]:
+        yf = _import_yfinance()
+        ticker = yf.Ticker(symbol)
+        frame = ticker.history(period="5y", interval="1d", auto_adjust=False)
+        if frame.empty:
+            raise ProviderNotConfiguredError(f"yfinance did not return daily bars for {symbol}.")
+
+        rows = frame.tail(bars).reset_index()
+        normalized = [
+            OhlcvBar(
+                date=str(row["Date"].date() if hasattr(row["Date"], "date") else row["Date"])[:10],
+                open=round(float(row["Open"]), 4),
+                high=round(float(row["High"]), 4),
+                low=round(float(row["Low"]), 4),
+                close=round(float(row["Close"]), 4),
+                volume=int(float(row.get("Volume") or 0)),
+            )
+            for _, row in rows.iterrows()
+        ]
+        return normalized
+
+    def quote(self, symbol: str) -> MarketQuote:
+        yf = _import_yfinance()
+        ticker = yf.Ticker(symbol)
+        fast_info = ticker.fast_info
+        price = float(fast_info.get("last_price") or fast_info.get("regular_market_price") or 0)
+        previous_close = fast_info.get("previous_close")
+        if not price:
+            bars = self.history(symbol, bars=2)
+            price = bars[-1].close
+            previous_close = bars[-2].close
+
+        previous = float(previous_close) if previous_close else None
+        change = price - previous if previous else None
+        return MarketQuote(
+            symbol=symbol,
+            price=round(price, 4),
+            previous_close=round(previous, 4) if previous else None,
+            change=round(change, 4) if change is not None else None,
+            change_percent=round(change / previous * 100, 4) if change is not None and previous else None,
+            volume=int(float(fast_info.get("last_volume") or 0)) or None,
+            timestamp=datetime.now(tz=timezone.utc).isoformat(),
+            provider="yfinance",
+            realtime=False,
+        )
+
+
 class ProviderNotConfiguredError(RuntimeError):
     pass
 
@@ -189,9 +237,11 @@ def get_market_data_provider() -> MarketDataProvider:
         return TwelveDataMarketDataProvider(settings.twelve_data_api_key)
     if provider == "finnhub":
         return FinnhubMarketDataProvider(settings.finnhub_api_key)
+    if provider in {"yfinance", "yahoo", "yahoo-finance"}:
+        return YFinanceMarketDataProvider()
     raise ProviderNotConfiguredError(
         f"{settings.market_data_provider} adapter is not configured in this build. "
-        "Supported values: sample-provider-ready, polygon, twelve-data, finnhub."
+        "Supported values: sample-provider-ready, yfinance, polygon, twelve-data, finnhub."
     )
 
 
@@ -244,3 +294,11 @@ def _optional_float(payload: dict, key: str) -> float | None:
 def _optional_int(payload: dict, key: str) -> int | None:
     value = payload.get(key)
     return None if value in {None, ""} else int(float(value))
+
+
+def _import_yfinance():
+    try:
+        import yfinance as yf
+    except ImportError as exc:
+        raise ProviderNotConfiguredError("yfinance is not installed. Add yfinance to the API requirements.") from exc
+    return yf

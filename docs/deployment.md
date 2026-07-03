@@ -33,6 +33,14 @@ MARKET_DATA_PROVIDER=polygon
 POLYGON_API_KEY=your_polygon_key
 ```
 
+No-key research setting:
+
+```bash
+MARKET_DATA_PROVIDER=yfinance
+```
+
+`yfinance` uses Yahoo Finance public data through an open-source Python package. Treat it as delayed/research data and verify Yahoo's terms before using it in a commercial production product. It is useful for getting the deployed API connected quickly without a paid key.
+
 The API exposes:
 
 - `GET /api/market/history/{symbol}?bars=140` for normalized OHLCV bars.

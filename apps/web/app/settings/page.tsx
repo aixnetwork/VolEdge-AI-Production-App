@@ -5,7 +5,7 @@ export default function SettingsPage() {
     <AppShell title="Settings">
       <section className="grid gap-4 md:grid-cols-2">
         {[
-          ["Market Data", "Provider-ready adapter: Polygon, Twelve Data, or Finnhub"],
+          ["Market Data", "Provider-ready adapters: yfinance, Polygon, Twelve Data, or Finnhub"],
           ["Authentication", "Supabase Auth"],
           ["Alerts", "Email, push, and in-app routing ready"],
           ["Trading Safety", "Version 1 remains alert-only"]

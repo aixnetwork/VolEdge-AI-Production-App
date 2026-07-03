@@ -3,7 +3,8 @@
 ## Required Before Launch
 
 - Replace `SampleMarketDataProvider` in `apps/api/app/providers.py` with a licensed market data provider implementation.
-- Supported market data values are `sample-provider-ready`, `polygon`, `twelve-data`, and `finnhub`.
+- Supported market data values are `sample-provider-ready`, `yfinance`, `polygon`, `twelve-data`, and `finnhub`.
+- Use `yfinance` only for delayed/research data. Use a licensed provider before marketing signals as real-time production intelligence.
 - Set `NEXT_PUBLIC_API_BASE_URL` in Vercel.
 - Set `CORS_ORIGINS` in the API deployment to the exact Vercel domain.
 - Run `database/schema.sql` in Supabase.
