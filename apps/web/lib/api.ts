@@ -270,7 +270,17 @@ export async function getPatternData(): Promise<{ patterns: PatternInsight[]; us
 
 export async function getBacktestData(symbol = "UVIX") {
   const data = await apiGet<{
-    windows: Array<{ window: string; trades: number; win_rate: number; average_return: number; max_drawdown: number }>;
+    windows: Array<{
+      window: string;
+      trades: number;
+      win_rate: number;
+      raw_win_rate?: number;
+      average_return: number;
+      expected_return?: number;
+      max_drawdown: number;
+      profit_factor?: number;
+      filter?: string;
+    }>;
   }>(`/api/backtest/${symbol}`);
   if (!data) {
     return fallbackBacktestRows;
@@ -279,9 +289,12 @@ export async function getBacktestData(symbol = "UVIX") {
     window: item.window,
     trades: item.trades,
     winRate: `${item.win_rate.toFixed(0)}%`,
+    rawWinRate: typeof item.raw_win_rate === "number" ? `${item.raw_win_rate.toFixed(0)}%` : "N/A",
     avgReturn: formatPercent(item.average_return),
+    expectedReturn: typeof item.expected_return === "number" ? formatPercent(item.expected_return) : formatPercent(item.average_return),
     drawdown: `-${item.max_drawdown.toFixed(1)}%`,
-    profitFactor: "API"
+    profitFactor: typeof item.profit_factor === "number" ? item.profit_factor.toFixed(2) : "API",
+    filter: item.filter ?? "Qualified setup"
   }));
 }
 

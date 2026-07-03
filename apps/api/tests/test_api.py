@@ -92,3 +92,5 @@ def test_backtest_endpoint_returns_expected_fields():
     assert body["summary"]["trades"] > 0
     assert body["summary"]["profit_factor"] >= 1
     assert len(body["windows"]) == 3
+    assert body["windows"][0]["filter"] == "Qualified setup only"
+    assert body["windows"][0]["profit_factor"] >= 1

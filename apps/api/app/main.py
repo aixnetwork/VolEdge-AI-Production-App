@@ -112,7 +112,7 @@ def accuracy(symbol: str):
 @app.get("/api/backtest/{symbol}")
 def backtest(symbol: str):
     intel = _require_symbol(symbol, build_intelligence)
-    return {"summary": run_signal_backtest(intel), "windows": summarize_backtest_windows(intel.symbol)}
+    return {"summary": run_signal_backtest(intel), "windows": summarize_backtest_windows(intel.symbol, intel.pattern.direction)}
 
 
 @app.get("/api/sectors/radar")

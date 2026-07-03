@@ -1,45 +1,48 @@
 from __future__ import annotations
 
-from statistics import mean
-
-from ..market_data import returns
+from .accuracy import score_setup_window
 from ..models import BacktestResult, Intelligence
 from ..providers import get_market_data_provider
 
 
 def run_signal_backtest(intelligence: Intelligence) -> BacktestResult:
-    bars = get_market_data_provider().history(intelligence.symbol)
-    period_returns = returns(bars, holding_period=5)
-    wins = [value for value in period_returns if value > 0]
-    losses = [value for value in period_returns if value <= 0]
-    gross_profit = sum(wins)
-    gross_loss = abs(sum(losses))
+    holding_period = _holding_period_from_label(intelligence.best_holding_window)
+    metrics = _qualified_window_metrics(intelligence.symbol, intelligence.pattern.direction, holding_period)
 
     return BacktestResult(
         symbol=intelligence.symbol,
-        strategy=f"{intelligence.pattern.name} with manual approval",
-        trades=intelligence.historical_matches,
-        win_rate=intelligence.historical_accuracy,
-        expected_return=intelligence.expected_return,
-        max_drawdown=round(abs(min(losses, default=0)) * 100, 2),
-        profit_factor=round(gross_profit / gross_loss if gross_loss else gross_profit or 1, 2),
+        strategy=f"{intelligence.pattern.name} qualified setup filter",
+        trades=int(metrics["trades"]),
+        win_rate=float(metrics["win_rate"]),
+        expected_return=float(metrics["expected_return"]),
+        max_drawdown=float(metrics["max_drawdown"]),
+        profit_factor=float(metrics["profit_factor"]),
         best_window=intelligence.best_holding_window,
     )
 
 
-def summarize_backtest_windows(symbol: str) -> list[dict[str, float | int | str]]:
+def summarize_backtest_windows(symbol: str, direction: str = "Bullish") -> list[dict[str, float | int | str]]:
+    return [_qualified_window_metrics(symbol, direction, holding_period) for holding_period in (3, 5, 8)]
+
+
+def _qualified_window_metrics(symbol: str, direction: str, holding_period: int) -> dict[str, float | int | str]:
     bars = get_market_data_provider().history(symbol)
-    windows = []
+    metrics = score_setup_window(bars, quality_threshold=0.012, direction=direction, holding_period=holding_period)
+    return {
+        "window": f"{holding_period} trading days",
+        "trades": metrics["matching_setups"],
+        "win_rate": metrics["historical_accuracy"],
+        "raw_win_rate": metrics["historical_win_rate"],
+        "average_return": metrics["average_return"],
+        "expected_return": metrics["expected_return"],
+        "max_drawdown": abs(float(metrics["average_drawdown"])),
+        "profit_factor": metrics["profit_factor"],
+        "filter": "Qualified setup only",
+    }
+
+
+def _holding_period_from_label(label: str) -> int:
     for holding_period in (3, 5, 8):
-        period_returns = returns(bars, holding_period=holding_period)
-        wins = [value for value in period_returns if value > 0]
-        windows.append(
-            {
-                "window": f"{holding_period} trading days",
-                "trades": len(period_returns),
-                "win_rate": round(len(wins) / len(period_returns) * 100, 2),
-                "average_return": round(mean(period_returns) * 100, 2),
-                "max_drawdown": round(abs(min(period_returns, default=0)) * 100, 2),
-            }
-        )
-    return windows
+        if label.startswith(str(holding_period)):
+            return holding_period
+    return 5
