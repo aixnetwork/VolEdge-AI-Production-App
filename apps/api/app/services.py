@@ -27,6 +27,16 @@ RADAR_PRIORITY_SYMBOLS = [
     "XBI",
     "LABU",
     "LABD",
+    "IBIT",
+    "FBTC",
+    "BITB",
+    "ARKB",
+    "BITO",
+    "BITU",
+    "SBIT",
+    "ETHA",
+    "FETH",
+    "ETHW",
 ]
 
 
@@ -40,6 +50,10 @@ def build_intelligence(symbol: str) -> Intelligence:
     atr = sum(bar.high - bar.low for bar in bars[-14:]) / 14
     resistance = max(bar.high for bar in bars[-16:-1])
     support = min(bar.low for bar in bars[-16:-1])
+    avg_volume = sum(bar.volume for bar in bars[-21:-1]) / 20
+    volume_ratio = latest.volume / max(1, avg_volume)
+    short_average = sum(bar.close for bar in bars[-10:]) / 10
+    long_average = sum(bar.close for bar in bars[-30:]) / 30
     if pattern.direction == "Bearish":
         entry = min(latest.close, support - atr * 0.08) if pattern.name.startswith("Pre-Breakdown") else latest.close
         stop = max(resistance, entry + atr * 1.05)
@@ -66,12 +80,20 @@ def build_intelligence(symbol: str) -> Intelligence:
         else "watch trigger near the current range"
     )
     setup_stage = "early setup" if pattern.name.startswith("Pre-") else "confirmed move"
+    trend_label = (
+        "trend-aligned"
+        if (pattern.direction == "Bearish" and latest.close < short_average < long_average)
+        or (pattern.direction != "Bearish" and latest.close > short_average > long_average)
+        else "mixed-trend"
+    )
+    volume_label = "rising volume" if volume_ratio >= 1.12 else "normal volume" if volume_ratio >= 0.85 else "light volume"
     explanation = (
         f"{symbol} is a {setup_stage} with a {trigger_label} near {entry:.2f}. "
         f"Its {pattern.name.lower()} has a "
         f"{pattern.quality_score:.0f}/100 pattern quality score, {accuracy.historical_accuracy:.0f}% "
         f"directional historical accuracy across {accuracy.matching_setups} matching setups, and a calculated "
-        f"{accuracy.expected_return:.2f}% expected return over the best window."
+        f"{accuracy.expected_return:.2f}% expected return over the best window. "
+        f"The swing-trade filter reads {trend_label} with {volume_label} at {volume_ratio:.2f}x the recent average."
     )
     return Intelligence(
         symbol=symbol,

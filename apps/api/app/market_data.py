@@ -39,6 +39,19 @@ ETF_UNIVERSE = {
     "LABD": ("Biotech", -3),
     "TNA": ("Small Cap", 3),
     "TZA": ("Small Cap", -3),
+    "IBIT": ("Crypto Bitcoin", 1),
+    "FBTC": ("Crypto Bitcoin", 1),
+    "BITB": ("Crypto Bitcoin", 1),
+    "ARKB": ("Crypto Bitcoin", 1),
+    "GBTC": ("Crypto Bitcoin", 1),
+    "HODL": ("Crypto Bitcoin", 1),
+    "BITO": ("Bitcoin Futures", 1),
+    "BITU": ("Leveraged Bitcoin", 2),
+    "SBIT": ("Inverse Bitcoin", -2),
+    "ETHA": ("Crypto Ethereum", 1),
+    "FETH": ("Crypto Ethereum", 1),
+    "ETHW": ("Crypto Ethereum", 1),
+    "ETHE": ("Crypto Ethereum", 1),
 }
 
 

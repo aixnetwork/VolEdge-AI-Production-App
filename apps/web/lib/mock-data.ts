@@ -100,12 +100,54 @@ export const opportunities: Opportunity[] = [
     target: "104.80",
     riskReward: "1.9:1",
     explanation: "Biotech is improving, though confirmation is still less decisive than the top-ranked opportunities."
+  },
+  {
+    rank: 5,
+    symbol: "IBIT",
+    category: "Crypto Bitcoin",
+    score: 75,
+    accuracy: 59,
+    confidence: "Medium",
+    matches: 58,
+    expectedReturn: "+5.8%",
+    window: "5 trading days",
+    recommendation: "Strong Buy",
+    action: "Buy",
+    triggerSide: "High Trigger",
+    pattern: "Pre-Breakout Compression",
+    entry: "67.40",
+    stop: "63.10",
+    target: "76.20",
+    riskReward: "2.0:1",
+    explanation: "Bitcoin exposure is compressing near resistance with improving volume confirmation."
+  },
+  {
+    rank: 6,
+    symbol: "ETHA",
+    category: "Crypto Ethereum",
+    score: 72,
+    accuracy: 57,
+    confidence: "Medium",
+    matches: 47,
+    expectedReturn: "+4.9%",
+    window: "5 trading days",
+    recommendation: "Watch",
+    action: "Watch",
+    triggerSide: "Range Trigger",
+    pattern: "Volatility Expansion",
+    entry: "31.80",
+    stop: "29.60",
+    target: "36.20",
+    riskReward: "2.0:1",
+    explanation: "Ethereum exposure is active, but the model waits for cleaner trend alignment before upgrading it."
   }
 ];
 
 export const sectors = [
   { sector: "Volatility", symbol: "UVIX", score: 94, signal: "Extreme Buy", strength: "+18.2%" },
   { sector: "Semiconductors", symbol: "SOXX", score: 88, signal: "Strong Buy", strength: "+7.4%" },
+  { sector: "Crypto Bitcoin", symbol: "IBIT", score: 82, signal: "Strong Buy", strength: "+6.8%" },
+  { sector: "Crypto Ethereum", symbol: "ETHA", score: 73, signal: "Watch", strength: "+3.9%" },
   { sector: "Gold Miners", symbol: "GDX", score: 80, signal: "Strong Buy", strength: "+5.2%" },
   { sector: "Energy", symbol: "XLE", score: 54, signal: "Watch", strength: "+1.1%" }
 ];
@@ -135,6 +177,7 @@ export const backtestRows = [
 export const alerts = [
   { symbol: "UVIX", condition: "VolEdge Score above 85", status: "Armed" },
   { symbol: "SOXL", condition: "Breakout confirmed by volume", status: "Watching" },
+  { symbol: "IBIT", condition: "Crypto ETF high trigger confirmed", status: "Armed" },
   { symbol: "GLD", condition: "Accuracy above 60%", status: "Armed" }
 ];
 
@@ -152,6 +195,7 @@ export const productArchitecture = [
   "Historical Accuracy Engine",
   "ETF Intelligence",
   "Gold & Silver Intelligence",
+  "Crypto ETF Intelligence",
   "Volatility Intelligence",
   "Portfolio Intelligence",
   "Alert Center"

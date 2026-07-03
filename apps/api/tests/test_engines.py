@@ -64,6 +64,16 @@ def test_sector_volatility_radar_is_ranked():
     sectors = sector_radar()
     assert len(sectors) >= 5
     assert sectors[0].sector_volatility_score >= sectors[-1].sector_volatility_score
+    assert any(sector.symbol in {"IBIT", "ETHA"} for sector in sectors)
+
+
+def test_crypto_etfs_are_supported_in_intelligence_and_radar():
+    bitcoin = build_intelligence("IBIT")
+    ethereum = build_intelligence("ETHA")
+    radar_symbols = {item.symbol for item in opportunity_radar()}
+    assert bitcoin.category == "Crypto Bitcoin"
+    assert ethereum.category == "Crypto Ethereum"
+    assert {"IBIT", "ETHA"}.issubset(radar_symbols)
 
 
 def test_opportunity_radar_skips_failed_symbols(monkeypatch):

@@ -42,6 +42,14 @@ def test_market_history_endpoint_caps_and_returns_bars():
     assert body["bars"][-1]["close"] > 0
 
 
+def test_crypto_etf_intelligence_endpoint():
+    response = client.get("/api/intelligence/IBIT")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["symbol"] == "IBIT"
+    assert body["category"] == "Crypto Bitcoin"
+
+
 def test_alert_generation():
     response = client.post("/api/alerts", json={"symbol": "GLD", "condition": "Score above", "threshold": 75})
     assert response.status_code == 200

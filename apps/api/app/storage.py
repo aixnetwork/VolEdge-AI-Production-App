@@ -28,7 +28,7 @@ class InMemoryStore:
         self._alerts: list[Alert] = [
             Alert(id="alert_uvix_score", symbol="UVIX", condition="VolEdge Score above", threshold=82),
         ]
-        self._watchlist = ["UVIX", "GLD", "SOXL", "XBI"]
+        self._watchlist = ["UVIX", "GLD", "SOXL", "XBI", "IBIT", "ETHA"]
 
     def list_alerts(self) -> list[Alert]:
         return list(self._alerts)

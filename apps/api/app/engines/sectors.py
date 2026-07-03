@@ -5,7 +5,7 @@ from ..models import Recommendation, SectorSignal
 from ..providers import get_market_data_provider
 
 
-SECTOR_SYMBOLS = ["XLK", "SOXX", "GLD", "SLV", "GDX", "EEM", "XLF", "XLE", "XBI", "IWM"]
+SECTOR_SYMBOLS = ["XLK", "SOXX", "GLD", "SLV", "GDX", "EEM", "XLF", "XLE", "XBI", "IWM", "IBIT", "ETHA"]
 
 
 def calculate_sector_signal(symbol: str) -> SectorSignal:
