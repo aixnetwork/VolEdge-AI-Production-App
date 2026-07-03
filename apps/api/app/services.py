@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from time import monotonic
+
 from .engines.accuracy import calculate_historical_accuracy
 from .engines.confirmation import build_institutional_confirmation, build_timeframe_confirmation
 from .engines.market_regime import classify_market_regime
@@ -41,8 +43,24 @@ RADAR_PRIORITY_SYMBOLS = [
     "ETHW",
 ]
 
+CACHE_TTL_SECONDS = 60
+_intelligence_cache: dict[str, tuple[float, Intelligence]] = {}
+_radar_cache: tuple[float, list[Intelligence]] | None = None
+
 
 def build_intelligence(symbol: str) -> Intelligence:
+    normalized_symbol = symbol.upper()
+    cached = _intelligence_cache.get(normalized_symbol)
+    now = monotonic()
+    if cached and now - cached[0] < CACHE_TTL_SECONDS:
+        return cached[1]
+
+    intelligence = _build_intelligence(normalized_symbol)
+    _intelligence_cache[normalized_symbol] = (now, intelligence)
+    return intelligence
+
+
+def _build_intelligence(symbol: str) -> Intelligence:
     provider = get_market_data_provider()
     bars = provider.history(symbol)
     benchmark = provider.history("SPY") if symbol != "SPY" else bars
@@ -196,6 +214,12 @@ def build_intelligence(symbol: str) -> Intelligence:
 
 
 def opportunity_radar() -> list[Intelligence]:
+    global _radar_cache
+
+    now = monotonic()
+    if _radar_cache and now - _radar_cache[0] < CACHE_TTL_SECONDS:
+        return _radar_cache[1]
+
     opportunities = []
     for symbol in RADAR_PRIORITY_SYMBOLS:
         if symbol not in ETF_UNIVERSE:
@@ -206,7 +230,9 @@ def opportunity_radar() -> list[Intelligence]:
             continue
     if not opportunities:
         opportunities = [build_intelligence(symbol) for symbol in ("SPY", "QQQ", "GLD")]
-    return sorted(opportunities, key=lambda item: item.vol_edge_score, reverse=True)
+    ranked = sorted(opportunities, key=lambda item: item.vol_edge_score, reverse=True)
+    _radar_cache = (now, ranked)
+    return ranked
 
 
 def _confidence_score(
