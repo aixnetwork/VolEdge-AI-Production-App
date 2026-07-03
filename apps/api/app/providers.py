@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import math
 from typing import Protocol
 
 import httpx
@@ -198,19 +199,22 @@ class YFinanceMarketDataProvider:
 
     def quote(self, symbol: str) -> MarketQuote:
         yf = _import_yfinance()
-        fast_info = {}
+        volume = None
         try:
             fast_info = yf.Ticker(symbol).fast_info
             price = float(fast_info.get("last_price") or fast_info.get("regular_market_price") or 0)
             previous_close = fast_info.get("previous_close")
+            raw_volume = fast_info.get("last_volume")
+            volume = int(float(raw_volume)) if raw_volume else None
         except Exception:
             price = 0
             previous_close = None
 
-        if not price or not previous_close:
+        if not _is_valid_number(price) or not _is_valid_number(previous_close):
             bars = self.history(symbol, bars=2)
             price = bars[-1].close
             previous_close = previous_close or bars[-2].close
+            volume = volume or bars[-1].volume
 
         previous = float(previous_close) if previous_close else None
         change = price - previous if previous else None
@@ -220,7 +224,7 @@ class YFinanceMarketDataProvider:
             previous_close=round(previous, 4) if previous else None,
             change=round(change, 4) if change is not None else None,
             change_percent=round(change / previous * 100, 4) if change is not None and previous else None,
-            volume=int(float(fast_info.get("last_volume") or 0)) or None,
+            volume=volume,
             timestamp=datetime.now(tz=timezone.utc).isoformat(),
             provider="yfinance",
             realtime=False,
@@ -299,6 +303,14 @@ def _optional_float(payload: dict, key: str) -> float | None:
 def _optional_int(payload: dict, key: str) -> int | None:
     value = payload.get(key)
     return None if value in {None, ""} else int(float(value))
+
+
+def _is_valid_number(value: object) -> bool:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(numeric) and numeric > 0
 
 
 def _import_yfinance():
