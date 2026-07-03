@@ -12,12 +12,12 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://voledge-ai-a
 type ApiIntelligence = {
   symbol: string;
   category: string;
-  latest_price: number;
-  price_change: number | null;
-  price_change_percent: number | null;
-  price_timestamp: string;
-  price_provider: string;
-  price_realtime: boolean;
+  latest_price?: number;
+  price_change?: number | null;
+  price_change_percent?: number | null;
+  price_timestamp?: string;
+  price_provider?: string;
+  price_realtime?: boolean;
   vol_edge_score: number;
   historical_accuracy: number;
   confidence_level: Opportunity["confidence"];
@@ -78,17 +78,24 @@ function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
       : "Watch";
   const triggerSide: Opportunity["triggerSide"] =
     action === "Sell" ? "Low Trigger" : action === "Buy" ? "High Trigger" : "Range Trigger";
+  const hasPrice = typeof item.latest_price === "number" && Number.isFinite(item.latest_price);
+  const price = hasPrice ? item.latest_price as number : item.suggested_entry;
+  const priceSource = hasPrice
+    ? item.price_realtime
+      ? `${item.price_provider ?? "market"} live`
+      : `${item.price_provider ?? "market"} delayed`
+    : "API price pending";
 
   return {
     rank,
     symbol: item.symbol,
     category: item.category,
-    currentPrice: formatPrice(item.latest_price),
-    priceChange: item.price_change === null ? "N/A" : `${item.price_change > 0 ? "+" : ""}${formatPrice(item.price_change)}`,
-    priceChangePercent: item.price_change_percent === null ? "N/A" : formatPercent(item.price_change_percent),
-    priceTone: item.price_change_percent === null ? "white" : item.price_change_percent >= 0 ? "mint" : "amber",
-    priceSource: item.price_realtime ? `${item.price_provider} live` : `${item.price_provider} delayed`,
-    priceAsOf: item.price_timestamp,
+    currentPrice: formatPrice(price),
+    priceChange: typeof item.price_change === "number" ? `${item.price_change > 0 ? "+" : ""}${formatPrice(item.price_change)}` : "N/A",
+    priceChangePercent: typeof item.price_change_percent === "number" ? formatPercent(item.price_change_percent) : "N/A",
+    priceTone: typeof item.price_change_percent !== "number" ? "white" : item.price_change_percent >= 0 ? "mint" : "amber",
+    priceSource,
+    priceAsOf: item.price_timestamp ?? "Pending API redeploy",
     score: Math.round(item.vol_edge_score),
     accuracy: Math.round(item.historical_accuracy),
     confidence: item.confidence_level,
