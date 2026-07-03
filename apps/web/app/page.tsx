@@ -51,15 +51,15 @@ export default async function Home() {
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <div className="text-xs uppercase text-steel">Score</div>
+                    <div className="text-xs uppercase text-steel">VolEdge</div>
                     <div className="font-bold text-mint">{item.score}</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase text-steel">Accuracy</div>
-                    <div className="font-bold text-amber">{item.accuracy}%</div>
+                    <div className="text-xs uppercase text-steel">Risk</div>
+                    <div className="font-bold text-amber">{item.riskScore ?? 50}</div>
                   </div>
                 </div>
-                <div className="mt-3 truncate text-sm text-steel">{item.pattern}</div>
+                <div className="mt-3 truncate text-sm text-steel">{item.marketRegime ?? item.pattern}</div>
               </article>
             );
           })}
@@ -84,9 +84,9 @@ export default async function Home() {
 
           <div className="grid gap-4 sm:grid-cols-4">
             <Metric label="Historical Accuracy" value={`${top.accuracy}%`} tone="amber" />
-            <Metric label="Confidence Level" value={top.confidence} tone="mint" />
-            <Metric label="Risk/Reward" value={top.riskReward} tone="amber" />
-            <Metric label="Recommendation" value={top.recommendation} />
+            <Metric label="Confidence Score" value={String(top.confidenceScore ?? top.accuracy)} tone="mint" />
+            <Metric label="Risk Score" value={String(top.riskScore ?? 50)} tone="amber" />
+            <Metric label="Historical Matches" value={String(top.matches)} />
           </div>
 
           <div className="mt-5 grid gap-4 border-t border-line pt-5 md:grid-cols-[1fr_0.85fr]">
@@ -94,10 +94,27 @@ export default async function Home() {
             <div className="grid grid-cols-2 gap-3">
               <Metric label="Latest Price" value={top.currentPrice} />
               <Metric label="Price Change" value={top.priceChangePercent} tone={top.priceTone === "amber" ? "amber" : top.priceTone === "mint" ? "mint" : undefined} />
+              <Metric label="Expected Value" value={top.expectedValue ?? top.expectedReturn} tone="mint" />
+              <Metric label="Best Window" value={top.window} />
               <Metric label="Trigger" value={top.entry} />
               <Metric label="Invalidation" value={top.stop} />
               <Metric label="Target" value={top.target} tone="mint" />
               <Metric label="Risk/Reward" value={top.riskReward} tone="amber" />
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 border-t border-line pt-5 md:grid-cols-3">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-steel">Market Regime</div>
+              <div className="mt-1 text-xl font-bold text-white">{top.marketRegime ?? "Pending regime"}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-steel">Timeframe Alignment</div>
+              <div className="mt-1 text-xl font-bold text-mint">{top.timeframeAlignment ?? 0}/100</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-steel">Adaptive Weights</div>
+              <div className="mt-1 text-sm font-semibold text-slate-200">{top.adaptiveWeightSummary ?? "Pending"}</div>
             </div>
           </div>
 

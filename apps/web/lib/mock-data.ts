@@ -9,11 +9,24 @@ export type Opportunity = {
   priceSource: string;
   priceAsOf: string;
   score: number;
+  confidenceScore?: number;
+  riskScore?: number;
   accuracy: number;
+  rawWinRate?: number;
   confidence: "Very High" | "High" | "Medium" | "Low";
   matches: number;
   expectedReturn: string;
+  expectedValue?: string;
+  averageLoss?: string;
+  maxDrawdown?: string;
+  profitFactor?: string;
+  sampleConfidence?: "Low" | "Medium" | "High";
   window: string;
+  marketRegime?: string;
+  regimeEvidence?: string;
+  timeframeAlignment?: number;
+  institutionalScore?: number;
+  adaptiveWeightSummary?: string;
   recommendation: "Extreme Buy" | "Strong Buy" | "Watch" | "Strong Sell" | "Hedge Opportunity";
   action: "Buy" | "Sell" | "Watch";
   triggerSide: "High Trigger" | "Low Trigger" | "Range Trigger";
@@ -37,11 +50,24 @@ export const opportunities: Opportunity[] = [
     priceSource: "sample-provider-ready",
     priceAsOf: "Latest bar",
     score: 91,
+    confidenceScore: 84,
+    riskScore: 38,
     accuracy: 67,
+    rawWinRate: 69,
     confidence: "Very High",
     matches: 84,
     expectedReturn: "+8.4%",
+    expectedValue: "+5.6%",
+    averageLoss: "-3.1%",
+    maxDrawdown: "-4.2%",
+    profitFactor: "1.82",
+    sampleConfidence: "High",
     window: "3-5 trading days",
+    marketRegime: "High Volatility",
+    regimeEvidence: "SPY trend, QQQ trend, and volatility expansion support active volatility monitoring.",
+    timeframeAlignment: 83,
+    institutionalScore: 81,
+    adaptiveWeightSummary: "historical accuracy, volatility expansion, trend alignment",
     recommendation: "Extreme Buy",
     action: "Buy",
     triggerSide: "High Trigger",

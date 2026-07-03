@@ -19,6 +19,8 @@ type ApiIntelligence = {
   price_provider?: string;
   price_realtime?: boolean;
   vol_edge_score: number;
+  confidence_score?: number;
+  risk_score?: number;
   historical_accuracy: number;
   confidence_level: Opportunity["confidence"];
   historical_matches: number;
@@ -30,6 +32,22 @@ type ApiIntelligence = {
   suggested_stop_loss: number;
   suggested_target: number;
   risk_reward: number;
+  market_regime?: { name: string; evidence: string };
+  evidence?: {
+    historical_win_rate: number;
+    historical_accuracy: number;
+    sample_size: number;
+    statistical_confidence: "Low" | "Medium" | "High";
+    average_return: number;
+    average_loss: number;
+    maximum_drawdown: number;
+    profit_factor: number;
+    expected_value: number;
+    best_holding_period: string;
+  };
+  timeframe_confirmation?: { alignment_score: number };
+  institutional_confirmation?: { confirmation_score: number };
+  adaptive_weights?: Record<string, number>;
   ai_explanation: string;
 };
 
@@ -97,11 +115,24 @@ function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
     priceSource,
     priceAsOf: item.price_timestamp ?? "Pending API redeploy",
     score: Math.round(item.vol_edge_score),
+    confidenceScore: Math.round(item.confidence_score ?? item.historical_accuracy),
+    riskScore: Math.round(item.risk_score ?? 50),
     accuracy: Math.round(item.historical_accuracy),
+    rawWinRate: Math.round(item.evidence?.historical_win_rate ?? item.historical_accuracy),
     confidence: item.confidence_level,
-    matches: item.historical_matches,
-    expectedReturn: formatPercent(item.expected_return),
-    window: item.best_holding_window,
+    matches: item.evidence?.sample_size ?? item.historical_matches,
+    expectedReturn: formatPercent(item.evidence?.average_return ?? item.expected_return),
+    expectedValue: formatPercent(item.evidence?.expected_value ?? item.expected_return),
+    averageLoss: formatPercent(item.evidence?.average_loss ?? 0),
+    maxDrawdown: formatPercent(-(Math.abs(item.evidence?.maximum_drawdown ?? 0))),
+    profitFactor: `${(item.evidence?.profit_factor ?? 1).toFixed(2)}`,
+    sampleConfidence: item.evidence?.statistical_confidence ?? (item.confidence_level === "Very High" ? "High" : item.confidence_level),
+    window: item.evidence?.best_holding_period ?? item.best_holding_window,
+    marketRegime: item.market_regime?.name ?? "Pending regime",
+    regimeEvidence: item.market_regime?.evidence ?? "",
+    timeframeAlignment: Math.round(item.timeframe_confirmation?.alignment_score ?? 0),
+    institutionalScore: Math.round(item.institutional_confirmation?.confirmation_score ?? 0),
+    adaptiveWeightSummary: summarizeWeights(item.adaptive_weights),
     recommendation: item.recommendation,
     action,
     triggerSide,
@@ -112,6 +143,28 @@ function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
     riskReward: `${item.risk_reward.toFixed(1)}:1`,
     explanation: item.ai_explanation
   };
+}
+
+function summarizeWeights(weights?: Record<string, number>): string {
+  if (!weights) {
+    return "adaptive weights pending";
+  }
+  const labels: Record<string, string> = {
+    accuracy: "historical accuracy",
+    pattern: "pattern reliability",
+    volatility: "volatility expansion",
+    momentum: "momentum",
+    risk_reward: "risk/reward",
+    volume: "relative volume",
+    trend: "trend alignment",
+    timeframe: "multi-timeframe alignment",
+    institutional: "institutional confirmation"
+  };
+  return Object.entries(weights)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name]) => labels[name] ?? name)
+    .join(", ");
 }
 
 export async function getRadarData() {

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..models import AccuracyStats, OhlcvBar, PatternSignal
+from ..models import AccuracyStats, InstitutionalConfirmation, MarketRegime, MultiTimeframeConfirmation, OhlcvBar, PatternSignal
 
 
 def _atr_score(bars: list[OhlcvBar]) -> float:
@@ -68,21 +68,104 @@ def score_opportunity(
     entry: float,
     stop: float,
     target: float,
+    market_regime: MarketRegime | None = None,
+    timeframe: MultiTimeframeConfirmation | None = None,
+    institutional: InstitutionalConfirmation | None = None,
+    adaptive_weights: dict[str, float] | None = None,
 ) -> float:
-    volatility = _atr_score(bars)
-    momentum = _momentum_score(bars, pattern.direction)
-    risk_reward = _risk_reward_score(entry, stop, target)
-    volume_confirmation = _volume_confirmation_score(bars, pattern)
-    trend_alignment = _trend_alignment_score(bars, pattern.direction)
-    setup_timing = _setup_timing_score(pattern)
-    score = (
-        accuracy.historical_accuracy * 0.24
-        + pattern.quality_score * 0.20
-        + volatility * 0.13
-        + momentum * 0.11
-        + risk_reward * 0.10
-        + volume_confirmation * 0.08
-        + trend_alignment * 0.06
-        + setup_timing * 0.08
-    )
+    factors = _factor_scores(bars, accuracy, pattern, entry, stop, target, timeframe, institutional)
+    weights = adaptive_weights or adaptive_factor_weights(bars, pattern.direction)
+    score = sum(factors[name] * weights.get(name, 0) for name in factors)
+    if market_regime:
+        score += _regime_adjustment(market_regime, pattern.direction)
     return round(min(100, max(0, score)), 2)
+
+
+def adaptive_factor_weights(bars: list[OhlcvBar], direction: str) -> dict[str, float]:
+    base = {
+        "accuracy": 0.22,
+        "pattern": 0.16,
+        "volatility": 0.12,
+        "momentum": 0.12,
+        "risk_reward": 0.10,
+        "volume": 0.10,
+        "trend": 0.10,
+        "timeframe": 0.04,
+        "institutional": 0.04,
+    }
+    performance = {
+        "momentum": _recent_factor_hit_rate(bars, "momentum", direction),
+        "trend": _recent_factor_hit_rate(bars, "trend", direction),
+        "volume": _recent_factor_hit_rate(bars, "volume", direction),
+        "volatility": _recent_factor_hit_rate(bars, "volatility", direction),
+    }
+    raw = dict(base)
+    for factor, hit_rate in performance.items():
+        raw[factor] *= 0.70 + hit_rate / 100 * 0.70
+    total = sum(raw.values())
+    return {name: round(value / total, 4) for name, value in raw.items()}
+
+
+def _factor_scores(
+    bars: list[OhlcvBar],
+    accuracy: AccuracyStats,
+    pattern: PatternSignal,
+    entry: float,
+    stop: float,
+    target: float,
+    timeframe: MultiTimeframeConfirmation | None,
+    institutional: InstitutionalConfirmation | None,
+) -> dict[str, float]:
+    return {
+        "accuracy": accuracy.historical_accuracy,
+        "pattern": pattern.quality_score,
+        "volatility": _atr_score(bars),
+        "momentum": _momentum_score(bars, pattern.direction),
+        "risk_reward": _risk_reward_score(entry, stop, target),
+        "volume": _volume_confirmation_score(bars, pattern),
+        "trend": _trend_alignment_score(bars, pattern.direction),
+        "timeframe": timeframe.alignment_score if timeframe else 58,
+        "institutional": institutional.confirmation_score if institutional else 58,
+    }
+
+
+def _recent_factor_hit_rate(bars: list[OhlcvBar], factor: str, direction: str) -> float:
+    wants_downside = direction == "Bearish"
+    hits = 0
+    total = 0
+    for index in range(max(42, len(bars) - 126), len(bars) - 5):
+        if not _factor_was_active(bars, index, factor, wants_downside):
+            continue
+        forward = (bars[index + 5].close - bars[index].close) / bars[index].close
+        won = forward < 0 if wants_downside else forward > 0
+        hits += 1 if won else 0
+        total += 1
+    return hits / total * 100 if total else 52.5
+
+
+def _factor_was_active(bars: list[OhlcvBar], index: int, factor: str, wants_downside: bool) -> bool:
+    close = bars[index].close
+    short = sum(bar.close for bar in bars[index - 9 : index + 1]) / 10
+    long = sum(bar.close for bar in bars[index - 29 : index + 1]) / 30
+    volume = bars[index].volume / max(1, sum(bar.volume for bar in bars[index - 20 : index]) / 20)
+    recent_atr = sum(bar.high - bar.low for bar in bars[index - 13 : index + 1]) / 14
+    prior_atr = sum(bar.high - bar.low for bar in bars[index - 41 : index - 13]) / 28
+    if factor == "momentum":
+        return close < bars[index - 10].close if wants_downside else close > bars[index - 10].close
+    if factor == "trend":
+        return close < short < long if wants_downside else close > short > long
+    if factor == "volume":
+        return volume >= 1.05
+    if factor == "volatility":
+        return recent_atr >= prior_atr * 0.95
+    return False
+
+
+def _regime_adjustment(market_regime: MarketRegime, direction: str) -> float:
+    if market_regime.name in {"Bull Market", "Risk-On"} and direction == "Bullish":
+        return 3
+    if market_regime.name in {"Bear Market", "Risk-Off", "Crisis Mode"} and direction == "Bearish":
+        return 3
+    if market_regime.name == "Crisis Mode" and direction == "Bullish":
+        return -7
+    return market_regime.confidence_modifier * 0.35

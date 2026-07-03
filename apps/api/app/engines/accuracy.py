@@ -54,7 +54,7 @@ def _score_holding_window(
     average_drawdown = mean(directional_losses) * 100 if directional_losses else 0
     gross_profit = sum(directional_wins)
     gross_loss = abs(sum(directional_losses))
-    profit_factor = gross_profit / gross_loss if gross_loss else gross_profit or 1
+    profit_factor = gross_profit / gross_loss if gross_loss else 9.99 if wins else 1
     confidence = "High" if matching_setups >= 70 and win_rate >= 55 else "Medium" if matching_setups >= 35 else "Low"
 
     return {

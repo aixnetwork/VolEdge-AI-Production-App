@@ -34,8 +34,18 @@ export function OpportunityCard({ item }: { item: Opportunity }) {
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Metric label="Accuracy" value={`${item.accuracy}%`} tone="amber" />
-        <Metric label="Confidence" value={item.confidence} tone="mint" />
-        <Metric label="Risk/Reward" value={item.riskReward} />
+        <Metric label="Confidence" value={String(item.confidenceScore ?? item.accuracy)} tone="mint" />
+        <Metric label="Risk" value={String(item.riskScore ?? 50)} tone="amber" />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <div className="text-xs uppercase text-steel">Expected Value</div>
+          <div className="font-bold text-mint">{item.expectedValue ?? item.expectedReturn}</div>
+        </div>
+        <div>
+          <div className="text-xs uppercase text-steel">Window</div>
+          <div className="font-bold text-white">{item.window}</div>
+        </div>
       </div>
       <Link href={`/etf/${item.symbol}`} className="mt-4 inline-flex h-10 items-center rounded bg-mint px-4 text-sm font-bold text-ink">
         Open Detail

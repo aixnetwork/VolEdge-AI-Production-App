@@ -25,6 +25,10 @@ export default async function EtfDetail({ params }: { params: { symbol: string }
             <div className="text-right">
               <div className="text-sm uppercase tracking-wide text-steel">VolEdge Score</div>
               <div className="text-8xl font-black leading-none text-mint">{opportunity.score}</div>
+              <div className="mt-3 grid grid-cols-2 gap-4 text-left">
+                <Metric label="Confidence" value={String(opportunity.confidenceScore ?? opportunity.accuracy)} tone="mint" />
+                <Metric label="Risk" value={String(opportunity.riskScore ?? 50)} tone="amber" />
+              </div>
             </div>
           </div>
 
@@ -32,14 +36,32 @@ export default async function EtfDetail({ params }: { params: { symbol: string }
             <Metric label="Latest Price" value={opportunity.currentPrice} />
             <Metric label="Price Change" value={opportunity.priceChangePercent} tone={opportunity.priceTone === "amber" ? "amber" : opportunity.priceTone === "mint" ? "mint" : undefined} />
             <Metric label="Historical Accuracy" value={`${opportunity.accuracy}%`} tone="amber" />
-            <Metric label="Confidence Level" value={opportunity.confidence} tone="mint" />
-            <Metric label="Risk/Reward" value={opportunity.riskReward} tone="amber" />
             <Metric label="Matches" value={String(opportunity.matches)} />
+            <Metric label="Expected Value" value={opportunity.expectedValue ?? opportunity.expectedReturn} tone="mint" />
+            <Metric label="Profit Factor" value={opportunity.profitFactor ?? "1.00"} />
+            <Metric label="Avg Loss" value={opportunity.averageLoss ?? "N/A"} tone="amber" />
+            <Metric label="Best Window" value={opportunity.window} />
           </div>
 
           <div className="mt-6 rounded border border-line bg-ink/45 p-4">
             <div className="text-sm uppercase tracking-wide text-steel">AI Explanation</div>
             <p className="mt-2 text-base leading-7 text-slate-200">{opportunity.explanation}</p>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded border border-line bg-ink/45 p-4">
+              <div className="text-xs uppercase text-steel">Market Regime</div>
+              <div className="mt-1 text-xl font-bold">{opportunity.marketRegime ?? "Pending"}</div>
+              <div className="mt-2 text-sm text-steel">{opportunity.regimeEvidence}</div>
+            </div>
+            <div className="rounded border border-line bg-ink/45 p-4">
+              <div className="text-xs uppercase text-steel">Timeframe Alignment</div>
+              <div className="mt-1 text-xl font-bold text-mint">{opportunity.timeframeAlignment ?? 0}/100</div>
+            </div>
+            <div className="rounded border border-line bg-ink/45 p-4">
+              <div className="text-xs uppercase text-steel">Adaptive Weight Focus</div>
+              <div className="mt-1 text-sm font-semibold text-slate-200">{opportunity.adaptiveWeightSummary ?? "Pending"}</div>
+            </div>
           </div>
         </div>
 
@@ -60,9 +82,9 @@ export default async function EtfDetail({ params }: { params: { symbol: string }
         <h2 className="mb-4 text-lg font-bold">Signal Stack</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            ["Pattern Strength", 88],
-            ["Volatility Setup", 91],
-            ["Momentum Confirmation", 76]
+            ["Confidence Score", opportunity.confidenceScore ?? opportunity.accuracy],
+            ["Institutional Confirmation", opportunity.institutionalScore ?? 0],
+            ["Risk Control", 100 - (opportunity.riskScore ?? 50)]
           ].map(([label, value]) => (
             <div key={label} className="rounded border border-line bg-ink/45 p-4">
               <div className="mb-2 flex justify-between text-sm">

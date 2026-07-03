@@ -21,6 +21,12 @@ def test_intelligence_endpoint_includes_manual_approval():
     assert body["latest_price"] > 0
     assert body["price_provider"]
     assert "price_change_percent" in body
+    assert 0 <= body["confidence_score"] <= 100
+    assert 0 <= body["risk_score"] <= 100
+    assert body["market_regime"]["name"]
+    assert body["evidence"]["sample_size"] > 0
+    assert body["timeframe_confirmation"]["alignment_score"] >= 0
+    assert body["institutional_confirmation"]["confirmation_score"] >= 0
     assert body["confidence_level"] in {"Low", "Medium", "High", "Very High"}
     assert body["suggested_entry"] > body["suggested_stop_loss"]
     assert body["suggested_target"] > body["suggested_entry"]
