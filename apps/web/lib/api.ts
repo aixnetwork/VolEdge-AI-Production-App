@@ -83,6 +83,28 @@ type ApiSector = {
   relative_strength_vs_spy: number;
 };
 
+export type AccuracyInsight = {
+  rank: number;
+  symbol: string;
+  category: string;
+  action: Opportunity["action"];
+  recommendation: Opportunity["recommendation"];
+  qualifiedAccuracy: number;
+  rawWinRate: number;
+  matches: number;
+  expectedValue: string;
+  averageReturn: string;
+  averageLoss: string;
+  maxDrawdown: string;
+  profitFactor: string;
+  confidence: "Low" | "Medium" | "High";
+  bestWindow: string;
+  pattern: string;
+  riskReward: string;
+  gateStatus: "Trade Ready" | "Watch";
+  explanation: string;
+};
+
 async function apiGet<T>(path: string): Promise<T | null> {
   if (!apiBaseUrl) {
     return null;
@@ -231,6 +253,67 @@ export async function getSectorData() {
     signal: item.recommendation,
     strength: formatPercent((item.relative_strength_vs_spy - 50) / 10)
   }));
+}
+
+export async function getAccuracyData(): Promise<{ top: AccuracyInsight; rows: AccuracyInsight[]; usingFallback: boolean }> {
+  const data = await apiGet<{ opportunities: ApiIntelligence[] }>("/api/radar");
+  if (!data) {
+    const rows: AccuracyInsight[] = fallbackOpportunities.map((item, index) => ({
+      rank: index + 1,
+      symbol: item.symbol,
+      category: item.category,
+      action: item.action,
+      recommendation: item.recommendation,
+      qualifiedAccuracy: item.accuracy,
+      rawWinRate: item.rawWinRate ?? item.accuracy,
+      matches: item.matches,
+      expectedValue: item.expectedValue ?? item.expectedReturn,
+      averageReturn: item.expectedReturn,
+      averageLoss: item.averageLoss ?? "N/A",
+      maxDrawdown: item.maxDrawdown ?? "N/A",
+      profitFactor: item.profitFactor ?? "1.00",
+      confidence: item.sampleConfidence ?? (item.confidence === "Very High" ? "High" : item.confidence),
+      bestWindow: item.window,
+      pattern: item.pattern,
+      riskReward: item.riskReward,
+      gateStatus: (item.action === "Watch" ? "Watch" : "Trade Ready") as AccuracyInsight["gateStatus"],
+      explanation: item.explanation
+    }));
+    return { top: rows[0], rows, usingFallback: true };
+  }
+
+  const rows: AccuracyInsight[] = data.opportunities
+    .map((item, index) => {
+      const opportunity = mapOpportunity(item, index + 1);
+      const evidence = item.evidence;
+      return {
+        rank: index + 1,
+        symbol: item.symbol,
+        category: item.category,
+        action: opportunity.action,
+        recommendation: item.recommendation,
+        qualifiedAccuracy: Math.round(item.historical_accuracy),
+        rawWinRate: Math.round(evidence?.historical_win_rate ?? item.historical_accuracy),
+        matches: evidence?.sample_size ?? item.historical_matches,
+        expectedValue: formatPercent(evidence?.expected_value ?? item.expected_return),
+        averageReturn: formatPercent(evidence?.average_return ?? item.expected_return),
+        averageLoss: formatPercent(evidence?.average_loss ?? 0),
+        maxDrawdown: formatPercent(-(Math.abs(evidence?.maximum_drawdown ?? 0))),
+        profitFactor: `${(evidence?.profit_factor ?? 1).toFixed(2)}`,
+        confidence: evidence?.statistical_confidence ?? (item.confidence_level === "Very High" ? "High" : item.confidence_level),
+        bestWindow: evidence?.best_holding_period ?? item.best_holding_window,
+        pattern: item.pattern.name,
+        riskReward: `${item.risk_reward.toFixed(1)}:1`,
+        gateStatus: (opportunity.action === "Watch" ? "Watch" : "Trade Ready") as AccuracyInsight["gateStatus"],
+        explanation: item.ai_explanation
+      };
+    })
+    .sort((a, b) => {
+      const gateBoost = (b.gateStatus === "Trade Ready" ? 100 : 0) - (a.gateStatus === "Trade Ready" ? 100 : 0);
+      return gateBoost || b.qualifiedAccuracy - a.qualifiedAccuracy || Number(b.profitFactor) - Number(a.profitFactor);
+    });
+
+  return { top: rows[0], rows, usingFallback: false };
 }
 
 export async function getPatternData(): Promise<{ patterns: PatternInsight[]; usingFallback: boolean }> {
