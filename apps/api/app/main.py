@@ -39,7 +39,7 @@ def provider_not_configured_handler(_: Request, exc: ProviderNotConfiguredError)
     return JSONResponse(status_code=503, content={"detail": str(exc), "trading_enabled": False})
 
 @app.get("/api/status")
-def status() -> dict[str, str | bool | list[str]]:
+def status() -> dict[str, str | bool | int | list[str]]:
     return {
         "status": "ok",
         "app": settings.app_name,
