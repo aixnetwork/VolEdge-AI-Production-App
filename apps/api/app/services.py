@@ -17,21 +17,47 @@ RADAR_PRIORITY_SYMBOLS = [
     "SPY",
     "QQQ",
     "IWM",
+    "UPRO",
+    "SPXU",
+    "TQQQ",
+    "SQQQ",
     "XLK",
+    "XLC",
+    "XLY",
+    "XLP",
+    "XLV",
+    "XLI",
+    "XLU",
+    "XLB",
     "SOXX",
+    "SMH",
     "SOXL",
     "SOXS",
+    "TECL",
+    "TECS",
     "UVIX",
     "VIXY",
     "SVIX",
+    "TLT",
+    "TMF",
+    "TMV",
+    "HYG",
+    "LQD",
     "GLD",
     "SLV",
     "GDX",
     "XLF",
+    "KRE",
     "XLE",
+    "USO",
+    "UNG",
     "XBI",
     "LABU",
     "LABD",
+    "XRT",
+    "URA",
+    "TAN",
+    "ICLN",
     "IBIT",
     "FBTC",
     "BITB",
@@ -98,11 +124,11 @@ def _build_intelligence(symbol: str) -> Intelligence:
     long_average = sum(bar.close for bar in bars[-30:]) / 30
     if pattern.direction == "Bearish":
         entry = min(latest.close, support - atr * 0.08) if pattern.name.startswith("Pre-Breakdown") else latest.close
-        stop = max(resistance, entry + atr * 1.05)
+        stop = min(resistance, entry + atr * 1.05) if resistance > entry else entry + atr * 1.05
         target = entry - atr * 2.0
     else:
         entry = max(latest.close, resistance + atr * 0.08) if pattern.name.startswith("Pre-Breakout") else latest.close
-        stop = min(support, entry - atr * 1.05)
+        stop = max(support, entry - atr * 1.05) if support < entry else entry - atr * 1.05
         target = entry + atr * 2.2
     adaptive_weights = adaptive_factor_weights(bars, pattern.direction)
     score = score_opportunity(

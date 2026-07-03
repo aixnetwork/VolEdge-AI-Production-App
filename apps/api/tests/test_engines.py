@@ -86,6 +86,22 @@ def test_crypto_etfs_are_supported_in_intelligence_and_radar():
     assert {"IBIT", "ETHA"}.issubset(radar_symbols)
 
 
+def test_expanded_swing_etf_universe_is_supported():
+    leveraged_nasdaq = build_intelligence("TQQQ")
+    semiconductors = build_intelligence("SMH")
+    radar_symbols = {item.symbol for item in opportunity_radar()}
+    assert leveraged_nasdaq.category == "Nasdaq 100"
+    assert semiconductors.category == "Semiconductors"
+    assert {"TQQQ", "SMH"}.issubset(radar_symbols)
+
+
+def test_trade_ready_setups_have_reasonable_risk_reward():
+    candidate = build_intelligence("GLD")
+    assert candidate.suggested_entry > candidate.suggested_stop_loss
+    assert candidate.suggested_target > candidate.suggested_entry
+    assert candidate.risk_reward >= 1.35
+
+
 def test_opportunity_radar_skips_failed_symbols(monkeypatch):
     from apps.api.app import services
 
