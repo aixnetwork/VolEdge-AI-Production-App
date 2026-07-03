@@ -23,6 +23,25 @@ def test_intelligence_endpoint_includes_manual_approval():
     assert body["suggested_target"] > body["suggested_entry"]
 
 
+def test_market_quote_endpoint_returns_provider_status():
+    response = client.get("/api/market/quote/UVIX")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["symbol"] == "UVIX"
+    assert body["price"] > 0
+    assert body["provider"] == "sample-provider-ready"
+    assert body["realtime"] is False
+
+
+def test_market_history_endpoint_caps_and_returns_bars():
+    response = client.get("/api/market/history/UVIX?bars=5")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["symbol"] == "UVIX"
+    assert len(body["bars"]) == 5
+    assert body["bars"][-1]["close"] > 0
+
+
 def test_alert_generation():
     response = client.post("/api/alerts", json={"symbol": "GLD", "condition": "Score above", "threshold": 75})
     assert response.status_code == 200

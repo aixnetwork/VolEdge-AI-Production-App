@@ -63,6 +63,20 @@ def intelligence(symbol: str):
     return _require_symbol(symbol, build_intelligence)
 
 
+@app.get("/api/market/quote/{symbol}")
+def market_quote(symbol: str):
+    return _require_symbol(symbol, lambda value: get_market_data_provider().quote(value))
+
+
+@app.get("/api/market/history/{symbol}")
+def market_history(symbol: str, bars: int = 140):
+    normalized_bars = max(2, min(bars, 1000))
+    return _require_symbol(
+        symbol,
+        lambda value: {"symbol": value, "bars": get_market_data_provider().history(value, bars=normalized_bars)},
+    )
+
+
 @app.get("/api/patterns/{symbol}")
 def patterns(symbol: str):
     def build(value: str):

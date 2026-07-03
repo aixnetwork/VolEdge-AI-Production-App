@@ -25,6 +25,20 @@ class OhlcvBar:
     volume: int
 
 
+class MarketQuote(BaseModel):
+    symbol: str
+    price: float
+    previous_close: float | None = None
+    change: float | None = None
+    change_percent: float | None = None
+    bid: float | None = None
+    ask: float | None = None
+    volume: int | None = None
+    timestamp: str
+    provider: str
+    realtime: bool
+
+
 class AccuracyStats(BaseModel):
     historical_win_rate: float
     historical_accuracy: float

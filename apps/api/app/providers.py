@@ -7,17 +7,37 @@ import httpx
 
 from .config import get_settings
 from .market_data import load_ohlcv
-from .models import OhlcvBar
+from .models import MarketQuote, OhlcvBar
 
 
 class MarketDataProvider(Protocol):
     def history(self, symbol: str, bars: int = 140) -> list[OhlcvBar]:
         ...
 
+    def quote(self, symbol: str) -> MarketQuote:
+        ...
+
 
 class SampleMarketDataProvider:
     def history(self, symbol: str, bars: int = 140) -> list[OhlcvBar]:
         return load_ohlcv(symbol, bars=bars)
+
+    def quote(self, symbol: str) -> MarketQuote:
+        bars = self.history(symbol)
+        latest = bars[-1]
+        previous = bars[-2]
+        change = latest.close - previous.close
+        return MarketQuote(
+            symbol=symbol,
+            price=latest.close,
+            previous_close=previous.close,
+            change=round(change, 4),
+            change_percent=round(change / previous.close * 100, 4),
+            volume=latest.volume,
+            timestamp=latest.date,
+            provider="sample-provider-ready",
+            realtime=False,
+        )
 
 
 class PolygonMarketDataProvider:
@@ -40,6 +60,27 @@ class PolygonMarketDataProvider:
             for row in rows
         ]
         return list(reversed(normalized))
+
+    def quote(self, symbol: str) -> MarketQuote:
+        trade_payload = _get_json(f"https://api.polygon.io/v2/last/trade/{symbol}", {"apiKey": self.api_key})
+        trade = trade_payload.get("results") or {}
+        if "p" not in trade:
+            raise ProviderNotConfiguredError(f"Polygon did not return a last trade for {symbol}.")
+
+        previous_close = self.history(symbol, bars=2)[-2].close
+        price = float(trade["p"])
+        change = price - previous_close
+        return MarketQuote(
+            symbol=symbol,
+            price=price,
+            previous_close=previous_close,
+            change=round(change, 4),
+            change_percent=round(change / previous_close * 100, 4),
+            volume=int(float(trade.get("s") or 0)) or None,
+            timestamp=_timestamp_from_polygon_ns(trade.get("t")),
+            provider="polygon",
+            realtime=True,
+        )
 
 
 class TwelveDataMarketDataProvider:
@@ -64,6 +105,24 @@ class TwelveDataMarketDataProvider:
             for row in rows
         ]
         return list(reversed(normalized))
+
+    def quote(self, symbol: str) -> MarketQuote:
+        payload = _get_json("https://api.twelvedata.com/quote", {"symbol": symbol, "apikey": self.api_key})
+        price = _first_float(payload, "close", "price")
+        previous_close = _optional_float(payload, "previous_close")
+        change = _optional_float(payload, "change")
+        change_percent = _optional_float(payload, "percent_change")
+        return MarketQuote(
+            symbol=symbol,
+            price=price,
+            previous_close=previous_close,
+            change=change,
+            change_percent=change_percent,
+            volume=_optional_int(payload, "volume"),
+            timestamp=str(payload.get("timestamp") or payload.get("datetime") or datetime.now(tz=timezone.utc).isoformat()),
+            provider="twelve-data",
+            realtime=True,
+        )
 
 
 class FinnhubMarketDataProvider:
@@ -98,6 +157,21 @@ class FinnhubMarketDataProvider:
             for timestamp, open_price, high, low, close, volume in rows
         ]
         return normalized[-bars:]
+
+    def quote(self, symbol: str) -> MarketQuote:
+        payload = _get_json("https://finnhub.io/api/v1/quote", {"symbol": symbol, "token": self.api_key})
+        price = _first_float(payload, "c")
+        previous_close = _optional_float(payload, "pc")
+        return MarketQuote(
+            symbol=symbol,
+            price=price,
+            previous_close=previous_close,
+            change=_optional_float(payload, "d"),
+            change_percent=_optional_float(payload, "dp"),
+            timestamp=_date_from_epoch_seconds(int(payload["t"])) if payload.get("t") else datetime.now(tz=timezone.utc).isoformat(),
+            provider="finnhub",
+            realtime=True,
+        )
 
 
 class ProviderNotConfiguredError(RuntimeError):
@@ -146,3 +220,27 @@ def _date_from_epoch_ms(value: int) -> str:
 
 def _date_from_epoch_seconds(value: int) -> str:
     return datetime.fromtimestamp(value, tz=timezone.utc).date().isoformat()
+
+
+def _timestamp_from_polygon_ns(value: int | None) -> str:
+    if not value:
+        return datetime.now(tz=timezone.utc).isoformat()
+    return datetime.fromtimestamp(value / 1_000_000_000, tz=timezone.utc).isoformat()
+
+
+def _first_float(payload: dict, *keys: str) -> float:
+    for key in keys:
+        value = payload.get(key)
+        if value not in {None, ""}:
+            return float(value)
+    raise ProviderNotConfiguredError("Market data provider did not return a current price.")
+
+
+def _optional_float(payload: dict, key: str) -> float | None:
+    value = payload.get(key)
+    return None if value in {None, ""} else float(value)
+
+
+def _optional_int(payload: dict, key: str) -> int | None:
+    value = payload.get(key)
+    return None if value in {None, ""} else int(float(value))

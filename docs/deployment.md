@@ -25,3 +25,17 @@
 ## Market Data
 
 The backend ships with a deterministic sample adapter and implemented adapter classes for Polygon, Twelve Data, and Finnhub. Production deployments should set `MARKET_DATA_PROVIDER` and the matching provider API key before presenting live alerts.
+
+Recommended production setting for US ETFs:
+
+```bash
+MARKET_DATA_PROVIDER=polygon
+POLYGON_API_KEY=your_polygon_key
+```
+
+The API exposes:
+
+- `GET /api/market/history/{symbol}?bars=140` for normalized OHLCV bars.
+- `GET /api/market/quote/{symbol}` for the latest quote/price snapshot.
+
+Real-time US equity and ETF data requires a licensed provider plan. If the deployment uses `sample-provider-ready`, the app is provider-ready but not live and `realtime` will be `false` in quote responses.
