@@ -198,14 +198,19 @@ class YFinanceMarketDataProvider:
 
     def quote(self, symbol: str) -> MarketQuote:
         yf = _import_yfinance()
-        ticker = yf.Ticker(symbol)
-        fast_info = ticker.fast_info
-        price = float(fast_info.get("last_price") or fast_info.get("regular_market_price") or 0)
-        previous_close = fast_info.get("previous_close")
-        if not price:
+        fast_info = {}
+        try:
+            fast_info = yf.Ticker(symbol).fast_info
+            price = float(fast_info.get("last_price") or fast_info.get("regular_market_price") or 0)
+            previous_close = fast_info.get("previous_close")
+        except Exception:
+            price = 0
+            previous_close = None
+
+        if not price or not previous_close:
             bars = self.history(symbol, bars=2)
             price = bars[-1].close
-            previous_close = bars[-2].close
+            previous_close = previous_close or bars[-2].close
 
         previous = float(previous_close) if previous_close else None
         change = price - previous if previous else None
