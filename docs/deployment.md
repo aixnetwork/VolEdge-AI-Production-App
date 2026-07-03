@@ -9,6 +9,26 @@
 
 ## Backend: Render or Railway
 
+### Easiest Render setup
+
+The repository includes a root `render.yaml` Blueprint. In Render, choose **Blueprint**, connect this repo, and Render will prefill the API service:
+
+- Service name: `voledge-ai-api`
+- Root directory: `apps/api`
+- Runtime: Docker
+- Health check: `/api/status`
+- Market data: `yfinance`
+
+If Render asks for a repository URL, use:
+
+```txt
+https://github.com/aixnetwork/VolEdge-AI-Production-App
+```
+
+The Blueprint uses no secrets. For licensed real-time data later, edit the Render environment variables to `MARKET_DATA_PROVIDER=polygon` and add `POLYGON_API_KEY`.
+
+### Manual Render setup
+
 1. Set the service root to `apps/api`.
 2. Install with `pip install -r requirements.txt`.
 3. Start with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: voledge-ai-api
+    runtime: docker
+    plan: free
+    branch: main
+    rootDir: apps/api
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    autoDeployTrigger: commit
+    healthCheckPath: /api/status
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: TRADING_ENABLED
+        value: "false"
+      - key: STORE_BACKEND
+        value: memory
+      - key: MARKET_DATA_PROVIDER
+        value: yfinance
+      - key: CORS_ORIGINS
+        value: https://vol-edge-ai-production-app-web.vercel.app
