@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: voledge-ai-api
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/status
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: TRADING_ENABLED
+        value: "false"

@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "VolEdge AI",
+    "slug": "voledge-ai",
+    "scheme": "voledge",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "plugins": ["expo-router"]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "voledge-ai",
+  "private": true,
+  "version": "0.1.0",
+  "description": "VolEdge AI ETF intelligence platform monorepo.",
+  "scripts": {
+    "dev:web": "pnpm --dir apps/web dev",
+    "build:web": "pnpm --dir apps/web build",
+    "test:api": "pytest apps/api/tests",
+    "dev:api": "uvicorn apps.api.app.main:app --reload",
+    "dev:mobile": "pnpm --dir apps/mobile start"
+  },
+  "workspaces": [
+    "apps/web",
+    "apps/mobile"
+  ],
+  "engines": {
+    "node": ">=20",
+    "python": ">=3.11"
+  }
+}
