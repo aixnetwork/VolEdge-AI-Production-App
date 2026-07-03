@@ -19,7 +19,7 @@ type ApiIntelligence = {
   expected_return: number;
   best_holding_window: string;
   recommendation: Opportunity["recommendation"];
-  pattern: { name: string };
+  pattern: { name: string; direction: "Bullish" | "Bearish" | "Neutral" };
   suggested_entry: number;
   suggested_stop_loss: number;
   suggested_target: number;
@@ -60,6 +60,15 @@ function formatPercent(value: number): string {
 }
 
 function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
+  const action: Opportunity["action"] =
+    item.recommendation === "Strong Sell" || item.recommendation === "Hedge Opportunity"
+      ? "Sell"
+      : item.recommendation === "Extreme Buy" || item.recommendation === "Strong Buy"
+      ? "Buy"
+      : "Watch";
+  const triggerSide: Opportunity["triggerSide"] =
+    action === "Sell" ? "Low Trigger" : action === "Buy" ? "High Trigger" : "Range Trigger";
+
   return {
     rank,
     symbol: item.symbol,
@@ -71,6 +80,8 @@ function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
     expectedReturn: formatPercent(item.expected_return),
     window: item.best_holding_window,
     recommendation: item.recommendation,
+    action,
+    triggerSide,
     pattern: item.pattern.name,
     entry: item.suggested_entry.toFixed(2),
     stop: item.suggested_stop_loss.toFixed(2),

@@ -8,6 +8,7 @@ import { productArchitecture, referenceTaglines } from "@/lib/mock-data";
 
 export default async function Home() {
   const [{ top, opportunities, usingFallback }, sectors] = await Promise.all([getRadarData(), getSectorData()]);
+  const topTriggers = opportunities.slice(0, 5);
 
   return (
     <AppShell title="Opportunity Radar">
@@ -16,6 +17,45 @@ export default async function Home() {
           Demo data is active. Set NEXT_PUBLIC_API_BASE_URL to connect live API intelligence.
         </div>
       ) : null}
+      <section className="mb-5 rounded border border-line bg-panel/90 p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">Top 5 Buy/Sell Triggers</h2>
+            <div className="mt-1 text-sm text-steel">Extreme volatility ranked by score, trigger side, and directional setup.</div>
+          </div>
+          <TrendingUp className="text-mint" size={20} />
+        </div>
+        <div className="grid gap-3 lg:grid-cols-5">
+          {topTriggers.map((item) => {
+            const actionTone = item.action === "Sell" ? "text-amber" : item.action === "Buy" ? "text-mint" : "text-white";
+            const actionBorder = item.action === "Sell" ? "border-amber/50" : item.action === "Buy" ? "border-mint/50" : "border-line";
+            return (
+              <article key={item.symbol} className={`rounded border ${actionBorder} bg-ink/45 p-4`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-steel">Rank {item.rank}</div>
+                    <div className="mt-1 text-3xl font-black">{item.symbol}</div>
+                  </div>
+                  <div className={`text-right text-2xl font-black ${actionTone}`}>{item.action}</div>
+                </div>
+                <div className="mt-3 text-xs uppercase tracking-wide text-steel">{item.triggerSide}</div>
+                <div className="mt-1 text-2xl font-bold text-white">{item.entry}</div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-xs uppercase text-steel">Score</div>
+                    <div className="font-bold text-mint">{item.score}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase text-steel">Accuracy</div>
+                    <div className="font-bold text-amber">{item.accuracy}%</div>
+                  </div>
+                </div>
+                <div className="mt-3 truncate text-sm text-steel">{item.pattern}</div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
       <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded border border-line bg-panel/90 p-5 shadow-2xl shadow-black/20">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">

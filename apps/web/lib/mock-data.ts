@@ -9,6 +9,8 @@ export type Opportunity = {
   expectedReturn: string;
   window: string;
   recommendation: "Extreme Buy" | "Strong Buy" | "Watch" | "Strong Sell" | "Hedge Opportunity";
+  action: "Buy" | "Sell" | "Watch";
+  triggerSide: "High Trigger" | "Low Trigger" | "Range Trigger";
   pattern: string;
   entry: string;
   stop: string;
@@ -29,6 +31,8 @@ export const opportunities: Opportunity[] = [
     expectedReturn: "+8.4%",
     window: "3-5 trading days",
     recommendation: "Extreme Buy",
+    action: "Buy",
+    triggerSide: "High Trigger",
     pattern: "Volatility Expansion",
     entry: "14.80",
     stop: "13.45",
@@ -48,6 +52,8 @@ export const opportunities: Opportunity[] = [
     expectedReturn: "+6.1%",
     window: "5 trading days",
     recommendation: "Strong Buy",
+    action: "Buy",
+    triggerSide: "High Trigger",
     pattern: "Breakout",
     entry: "62.10",
     stop: "58.20",
@@ -66,6 +72,8 @@ export const opportunities: Opportunity[] = [
     expectedReturn: "+3.2%",
     window: "8 trading days",
     recommendation: "Strong Buy",
+    action: "Buy",
+    triggerSide: "High Trigger",
     pattern: "Ascending Triangle",
     entry: "219.40",
     stop: "214.60",
@@ -84,6 +92,8 @@ export const opportunities: Opportunity[] = [
     expectedReturn: "+4.7%",
     window: "6 trading days",
     recommendation: "Watch",
+    action: "Watch",
+    triggerSide: "Range Trigger",
     pattern: "Bull Flag",
     entry: "96.30",
     stop: "91.75",

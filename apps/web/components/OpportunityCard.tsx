@@ -3,6 +3,7 @@ import { Metric } from "@/components/Metric";
 import type { Opportunity } from "@/lib/mock-data";
 
 export function OpportunityCard({ item }: { item: Opportunity }) {
+  const actionColor = item.action === "Sell" ? "text-amber" : item.action === "Buy" ? "text-mint" : "text-white";
   return (
     <article className="rounded border border-line bg-panel/80 p-4">
       <div className="flex items-start justify-between gap-3">
@@ -10,6 +11,7 @@ export function OpportunityCard({ item }: { item: Opportunity }) {
           <div className="text-sm text-steel">Rank {item.rank}</div>
           <h3 className="text-3xl font-black">{item.symbol}</h3>
           <div className="text-sm text-steel">{item.pattern}</div>
+          <div className={`mt-2 text-sm font-bold uppercase ${actionColor}`}>{item.action} / {item.triggerSide}</div>
         </div>
         <div className="text-right">
           <div className="text-xs uppercase text-steel">Score</div>
