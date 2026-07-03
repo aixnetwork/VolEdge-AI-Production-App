@@ -8,10 +8,21 @@ import { productArchitecture, referenceTaglines } from "@/lib/mock-data";
 
 export default async function Home() {
   const [{ top, opportunities, usingFallback }, sectors] = await Promise.all([getRadarData(), getSectorData()]);
-  const topTriggers = opportunities.slice(0, 5);
+  const tradeReadyTriggers = opportunities.filter(
+    (item) => item.action !== "Watch" && item.accuracy >= 60 && (item.confidenceScore ?? item.accuracy) >= 60 && (item.rawWinRate ?? item.accuracy) >= 50
+  );
+  const topTriggers = (tradeReadyTriggers.length ? tradeReadyTriggers : opportunities).slice(0, 5);
   const swingTransition =
     [...opportunities]
-      .filter((item) => item.transitionAction && item.transitionAction !== "Hold" && item.transitionStatus !== "Triggered" && item.transitionStatus !== "Invalidated")
+      .filter(
+        (item) =>
+          item.transitionAction &&
+          item.transitionAction !== "Hold" &&
+          item.transitionStatus !== "Triggered" &&
+          item.transitionStatus !== "Invalidated" &&
+          item.accuracy >= 60 &&
+          (item.confidenceScore ?? item.accuracy) >= 60
+      )
       .sort((a, b) => {
         const statusBoost = (b.transitionStatus === "Arming" ? 100 : 0) - (a.transitionStatus === "Arming" ? 100 : 0);
         return statusBoost || (b.transitionScore ?? 0) - (a.transitionScore ?? 0);
@@ -47,7 +58,7 @@ export default async function Home() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold">Top 5 Buy/Sell Triggers</h2>
-            <div className="mt-1 text-sm text-steel">Extreme volatility ranked by score, trigger side, and directional setup.</div>
+            <div className="mt-1 text-sm text-steel">Trade-ready signals first; weak historical setups stay on Watch.</div>
           </div>
           <TrendingUp className="text-mint" size={20} />
         </div>
@@ -85,6 +96,11 @@ export default async function Home() {
                     <div className="font-bold text-amber">{item.riskScore ?? 50}</div>
                   </div>
                 </div>
+                {item.action === "Watch" ? (
+                  <div className="mt-3 rounded border border-amber/40 bg-amber/10 px-3 py-2 text-xs font-bold uppercase text-amber">
+                    Accuracy gate: wait
+                  </div>
+                ) : null}
                 <div className="mt-3 truncate text-sm text-steel">{item.marketRegime ?? item.pattern}</div>
               </article>
             );

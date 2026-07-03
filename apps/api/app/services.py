@@ -46,6 +46,10 @@ RADAR_PRIORITY_SYMBOLS = [
 
 settings = get_settings()
 CACHE_TTL_SECONDS = settings.cache_ttl_seconds
+MIN_TRADE_READY_ACCURACY = 60
+MIN_TRADE_READY_MATCHES = 10
+MIN_TRADE_READY_PROFIT_FACTOR = 1.1
+MIN_TRADE_READY_RISK_REWARD = 1.35
 _intelligence_cache: dict[str, tuple[float, Intelligence]] = {}
 _radar_cache: tuple[float, list[Intelligence]] | None = None
 
@@ -114,7 +118,15 @@ def _build_intelligence(symbol: str) -> Intelligence:
         adaptive_weights=adaptive_weights,
     )
     confidence_score = _confidence_score(score, accuracy, pattern.quality_score, timeframe.alignment_score, institutional.confirmation_score, market_regime.confidence_modifier)
-    risk_score = _risk_score(bars, accuracy.average_drawdown, risk_reward=abs(target - entry) / max(0.01, abs(entry - stop)), market_regime=market_regime.name)
+    risk_reward = abs(target - entry) / max(0.01, abs(entry - stop))
+    quality_gate = _trade_quality_gate(accuracy, risk_reward)
+    if not quality_gate["passed"]:
+        score = min(score, float(quality_gate["score_cap"]))
+        confidence_score = min(confidence_score, score)
+    if pattern.direction == "Neutral":
+        score = min(score, 64.0)
+        confidence_score = min(confidence_score, score)
+    risk_score = _risk_score(bars, accuracy.average_drawdown, risk_reward=risk_reward, market_regime=market_regime.name)
     pattern = _augment_pattern_prediction(pattern, accuracy.historical_accuracy, timeframe.alignment_score, institutional.confirmation_score, confidence_score)
     transition_entry = _next_transition_trigger(latest.close, entry, atr, pattern.direction, pattern.name)
     swing_transition = _swing_transition_signal(
@@ -127,14 +139,17 @@ def _build_intelligence(symbol: str) -> Intelligence:
         timeframe_alignment=timeframe.alignment_score,
         institutional_confirmation=institutional.confirmation_score,
     )
-    if pattern.direction == "Bearish":
+    if not quality_gate["passed"]:
+        recommendation = Recommendation.WATCH
+    elif pattern.direction == "Bearish":
         recommendation = Recommendation.STRONG_SELL if score >= 73 else Recommendation.HEDGE if score >= 62 else Recommendation.WATCH
     elif pattern.direction == "Neutral":
         recommendation = Recommendation.WATCH
     else:
         recommendation = Recommendation.EXTREME_BUY if score >= 85 else Recommendation.STRONG_BUY if score >= 73 else Recommendation.WATCH
     confidence_level = "Very High" if score >= 88 and accuracy.historical_accuracy >= 65 else pattern.confidence_level
-    risk_reward = abs(target - entry) / max(0.01, abs(entry - stop))
+    if not quality_gate["passed"]:
+        confidence_level = "Low" if accuracy.historical_accuracy < MIN_TRADE_READY_ACCURACY else "Medium"
     category = ETF_UNIVERSE[symbol][0]
     latest_price = quote.price if quote else latest.close
     price_change = quote.change if quote else round(change, 4)
@@ -173,6 +188,11 @@ def _build_intelligence(symbol: str) -> Intelligence:
         f"It ranks highly because the adaptive engine currently gives the most weight to "
         f"{_top_weight_labels(adaptive_weights)} and this setup has {accuracy.matching_setups} comparable historical cases."
     )
+    gate_note = (
+        ""
+        if quality_gate["passed"]
+        else f" The trade-quality gate keeps this on Watch because {quality_gate['reason']}."
+    )
     explanation = (
         f"{symbol} is a {setup_stage} in a {market_regime.name.lower()} regime with a {trigger_label} near {entry:.2f}. "
         f"{rank_reason} Historical evidence shows {accuracy.historical_accuracy:.0f}% confidence-adjusted accuracy, "
@@ -182,6 +202,7 @@ def _build_intelligence(symbol: str) -> Intelligence:
         f"with institutional confirmation at {institutional.confirmation_score:.0f}/100. "
         f"The invalidation level is {stop:.2f}; target is {target:.2f}; risk/reward is {risk_reward:.2f}:1. "
         f"The swing-trade filter reads {trend_label} with {volume_label} at {volume_ratio:.2f}x the recent average."
+        f"{gate_note}"
     )
     return Intelligence(
         symbol=symbol,
@@ -290,6 +311,27 @@ def _risk_score(bars, average_drawdown: float, risk_reward: float, market_regime
     regime_risk = 18 if market_regime == "Crisis Mode" else 12 if market_regime in {"Bear Market", "High Volatility"} else 6
     score = atr_percent * 6 + drawdown_risk * 0.35 + rr_risk * 0.35 + regime_risk
     return round(min(100, max(0, score)), 2)
+
+
+def _trade_quality_gate(accuracy, risk_reward: float) -> dict[str, bool | float | str]:
+    blockers: list[str] = []
+    if accuracy.historical_accuracy < MIN_TRADE_READY_ACCURACY:
+        blockers.append(f"qualified accuracy is {accuracy.historical_accuracy:.0f}%")
+    if accuracy.matching_setups < MIN_TRADE_READY_MATCHES:
+        blockers.append(f"only {accuracy.matching_setups} historical matches are available")
+    if accuracy.profit_factor < MIN_TRADE_READY_PROFIT_FACTOR:
+        blockers.append(f"profit factor is {accuracy.profit_factor:.2f}")
+    if accuracy.expected_return <= 0:
+        blockers.append(f"expected value is {accuracy.expected_return:.2f}%")
+    if risk_reward < MIN_TRADE_READY_RISK_REWARD:
+        blockers.append(f"risk/reward is {risk_reward:.2f}:1")
+
+    if not blockers:
+        return {"passed": True, "score_cap": 100.0, "reason": "qualified setup passes trade-ready filters"}
+
+    hard_block = accuracy.historical_accuracy < 52 or accuracy.expected_return <= 0 or accuracy.profit_factor < 1
+    score_cap = 54.0 if hard_block else 62.0
+    return {"passed": False, "score_cap": score_cap, "reason": "; ".join(blockers)}
 
 
 def _augment_pattern_prediction(

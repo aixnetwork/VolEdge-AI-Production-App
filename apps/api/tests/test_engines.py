@@ -10,6 +10,7 @@ from apps.api.app.models import Alert
 from apps.api.app.providers import FinnhubMarketDataProvider, PolygonMarketDataProvider, ProviderNotConfiguredError, TwelveDataMarketDataProvider
 from apps.api.app.services import build_intelligence
 from apps.api.app.services import opportunity_radar
+from apps.api.app.services import _trade_quality_gate
 from apps.api.app.storage import InMemoryStore
 
 
@@ -56,7 +57,7 @@ def test_pattern_detection_returns_required_metrics():
 def test_intelligence_supports_sell_or_early_setup_language():
     candidates = [build_intelligence(symbol) for symbol in ("SOXS", "SQQQ", "LABD", "UVIX") if symbol in {"SOXS", "LABD", "UVIX"}]
     assert any(
-        item.recommendation.value in {"Strong Sell", "Hedge Opportunity"} or "early setup" in item.ai_explanation
+        item.pattern.direction == "Bearish" or "early setup" in item.ai_explanation
         for item in candidates
     )
 
@@ -111,6 +112,15 @@ def test_backtesting_returns_summary():
     result = run_signal_backtest(build_intelligence("GLD"))
     assert result.trades > 0
     assert result.best_window
+
+
+def test_trade_quality_gate_blocks_low_accuracy_setup():
+    stats = calculate_historical_accuracy(load_ohlcv("GLD"), quality_threshold=0.004)
+    weak_stats = stats.model_copy(update={"historical_accuracy": 48, "expected_return": -0.2, "profit_factor": 0.8})
+    gate = _trade_quality_gate(weak_stats, risk_reward=2.0)
+    assert gate["passed"] is False
+    assert gate["score_cap"] <= 54
+    assert "qualified accuracy" in str(gate["reason"])
 
 
 def test_portfolio_risk_reports_dominant_exposure():

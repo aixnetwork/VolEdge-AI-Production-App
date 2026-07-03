@@ -47,6 +47,11 @@ export function OpportunityCard({ item }: { item: Opportunity }) {
           <div className="font-bold text-white">{item.window}</div>
         </div>
       </div>
+      {item.action === "Watch" ? (
+        <div className="mt-3 rounded border border-amber/40 bg-amber/10 px-3 py-2 text-xs font-bold uppercase text-amber">
+          Accuracy gate: wait for stronger confirmation
+        </div>
+      ) : null}
       {item.transitionAction && item.transitionAction !== "Hold" ? (
         <div className="mt-3 rounded border border-line bg-ink/40 p-3 text-sm">
           <div className="flex items-center justify-between gap-2">
