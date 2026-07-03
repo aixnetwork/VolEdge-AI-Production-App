@@ -40,6 +40,15 @@ export default async function Home() {
                 </div>
                 <div className="mt-3 text-xs uppercase tracking-wide text-steel">{item.triggerSide}</div>
                 <div className="mt-1 text-2xl font-bold text-white">{item.entry}</div>
+                <div className="mt-3 rounded border border-line bg-panel/60 p-3">
+                  <div className="text-xs uppercase tracking-wide text-steel">Latest Price</div>
+                  <div className="mt-1 flex items-end justify-between gap-2">
+                    <span className="text-2xl font-black text-white">{item.currentPrice}</span>
+                    <span className={`text-right text-sm font-bold ${item.priceTone === "amber" ? "text-amber" : item.priceTone === "mint" ? "text-mint" : "text-white"}`}>
+                      {item.priceChangePercent}
+                    </span>
+                  </div>
+                </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <div className="text-xs uppercase text-steel">Score</div>
@@ -83,6 +92,8 @@ export default async function Home() {
           <div className="mt-5 grid gap-4 border-t border-line pt-5 md:grid-cols-[1fr_0.85fr]">
             <p className="text-base leading-7 text-slate-200">{top.explanation}</p>
             <div className="grid grid-cols-2 gap-3">
+              <Metric label="Latest Price" value={top.currentPrice} />
+              <Metric label="Price Change" value={top.priceChangePercent} tone={top.priceTone === "amber" ? "amber" : top.priceTone === "mint" ? "mint" : undefined} />
               <Metric label="Trigger" value={top.entry} />
               <Metric label="Invalidation" value={top.stop} />
               <Metric label="Target" value={top.target} tone="mint" />

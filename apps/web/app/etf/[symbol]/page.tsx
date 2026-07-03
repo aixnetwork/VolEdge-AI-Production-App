@@ -29,6 +29,8 @@ export default async function EtfDetail({ params }: { params: { symbol: string }
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-4">
+            <Metric label="Latest Price" value={opportunity.currentPrice} />
+            <Metric label="Price Change" value={opportunity.priceChangePercent} tone={opportunity.priceTone === "amber" ? "amber" : opportunity.priceTone === "mint" ? "mint" : undefined} />
             <Metric label="Historical Accuracy" value={`${opportunity.accuracy}%`} tone="amber" />
             <Metric label="Confidence Level" value={opportunity.confidence} tone="mint" />
             <Metric label="Risk/Reward" value={opportunity.riskReward} tone="amber" />
@@ -44,6 +46,7 @@ export default async function EtfDetail({ params }: { params: { symbol: string }
         <div className="rounded border border-line bg-panel/80 p-5">
           <h2 className="text-lg font-bold">Trade Plan</h2>
           <div className="mt-4 grid gap-4">
+            <Metric label="Latest Price" value={opportunity.currentPrice} />
             <Metric label="Suggested Entry" value={opportunity.entry} />
             <Metric label="Suggested Stop Loss" value={opportunity.stop} />
             <Metric label="Suggested Target" value={opportunity.target} tone="mint" />

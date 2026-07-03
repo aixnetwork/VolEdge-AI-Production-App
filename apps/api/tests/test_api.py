@@ -18,6 +18,9 @@ def test_intelligence_endpoint_includes_manual_approval():
     assert response.status_code == 200
     body = response.json()
     assert body["manual_approval_required"] is True
+    assert body["latest_price"] > 0
+    assert body["price_provider"]
+    assert "price_change_percent" in body
     assert body["confidence_level"] in {"Low", "Medium", "High", "Very High"}
     assert body["suggested_entry"] > body["suggested_stop_loss"]
     assert body["suggested_target"] > body["suggested_entry"]

@@ -62,6 +62,12 @@ class PatternSignal(BaseModel):
 class Intelligence(BaseModel):
     symbol: str
     category: str
+    latest_price: float
+    price_change: float | None = None
+    price_change_percent: float | None = None
+    price_timestamp: str
+    price_provider: str
+    price_realtime: bool
     vol_edge_score: float = Field(ge=0, le=100)
     historical_accuracy: float = Field(ge=0, le=100)
     confidence_level: Literal["Low", "Medium", "High", "Very High"]

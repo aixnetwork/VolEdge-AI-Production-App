@@ -41,12 +41,19 @@ RADAR_PRIORITY_SYMBOLS = [
 
 
 def build_intelligence(symbol: str) -> Intelligence:
-    bars = get_market_data_provider().history(symbol)
+    provider = get_market_data_provider()
+    bars = provider.history(symbol)
     baseline_accuracy = calculate_historical_accuracy(bars, quality_threshold=0.012)
     pattern = detect_primary_pattern(bars, baseline_accuracy.historical_accuracy)
     accuracy = calculate_historical_accuracy(bars, quality_threshold=0.012, direction=pattern.direction)
     pattern = detect_primary_pattern(bars, accuracy.historical_accuracy)
     latest = bars[-1]
+    previous = bars[-2]
+    try:
+        quote = provider.quote(symbol)
+    except Exception:
+        change = latest.close - previous.close
+        quote = None
     atr = sum(bar.high - bar.low for bar in bars[-14:]) / 14
     resistance = max(bar.high for bar in bars[-16:-1])
     support = min(bar.low for bar in bars[-16:-1])
@@ -72,6 +79,12 @@ def build_intelligence(symbol: str) -> Intelligence:
     confidence_level = "Very High" if score >= 88 and accuracy.historical_accuracy >= 65 else pattern.confidence_level
     risk_reward = abs(target - entry) / max(0.01, abs(entry - stop))
     category = ETF_UNIVERSE[symbol][0]
+    latest_price = quote.price if quote else latest.close
+    price_change = quote.change if quote else round(change, 4)
+    price_change_percent = quote.change_percent if quote else round(change / previous.close * 100, 4)
+    price_timestamp = quote.timestamp if quote else latest.date
+    price_provider = quote.provider if quote else "history-fallback"
+    price_realtime = quote.realtime if quote else False
     trigger_label = (
         "sell trigger below support"
         if pattern.direction == "Bearish"
@@ -98,6 +111,12 @@ def build_intelligence(symbol: str) -> Intelligence:
     return Intelligence(
         symbol=symbol,
         category=category,
+        latest_price=round(latest_price, 4),
+        price_change=price_change,
+        price_change_percent=price_change_percent,
+        price_timestamp=price_timestamp,
+        price_provider=price_provider,
+        price_realtime=price_realtime,
         vol_edge_score=score,
         historical_accuracy=accuracy.historical_accuracy,
         confidence_level=confidence_level,

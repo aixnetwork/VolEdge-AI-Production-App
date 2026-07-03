@@ -2,6 +2,12 @@ export type Opportunity = {
   rank: number;
   symbol: string;
   category: string;
+  currentPrice: string;
+  priceChange: string;
+  priceChangePercent: string;
+  priceTone: "mint" | "amber" | "white";
+  priceSource: string;
+  priceAsOf: string;
   score: number;
   accuracy: number;
   confidence: "Very High" | "High" | "Medium" | "Low";
@@ -24,6 +30,12 @@ export const opportunities: Opportunity[] = [
     rank: 1,
     symbol: "UVIX",
     category: "Volatility",
+    currentPrice: "14.52",
+    priceChange: "+0.44",
+    priceChangePercent: "+3.1%",
+    priceTone: "mint",
+    priceSource: "sample-provider-ready",
+    priceAsOf: "Latest bar",
     score: 91,
     accuracy: 67,
     confidence: "Very High",
@@ -45,6 +57,12 @@ export const opportunities: Opportunity[] = [
     rank: 2,
     symbol: "SOXL",
     category: "Semiconductors",
+    currentPrice: "62.42",
+    priceChange: "+1.16",
+    priceChangePercent: "+1.9%",
+    priceTone: "mint",
+    priceSource: "sample-provider-ready",
+    priceAsOf: "Latest bar",
     score: 86,
     accuracy: 63,
     confidence: "High",
@@ -65,6 +83,12 @@ export const opportunities: Opportunity[] = [
     rank: 3,
     symbol: "GLD",
     category: "Gold",
+    currentPrice: "219.72",
+    priceChange: "+0.68",
+    priceChangePercent: "+0.3%",
+    priceTone: "mint",
+    priceSource: "sample-provider-ready",
+    priceAsOf: "Latest bar",
     score: 82,
     accuracy: 61,
     confidence: "High",
@@ -85,6 +109,12 @@ export const opportunities: Opportunity[] = [
     rank: 4,
     symbol: "XBI",
     category: "Biotech",
+    currentPrice: "95.84",
+    priceChange: "-0.38",
+    priceChangePercent: "-0.4%",
+    priceTone: "amber",
+    priceSource: "sample-provider-ready",
+    priceAsOf: "Latest bar",
     score: 77,
     accuracy: 58,
     confidence: "Medium",
@@ -105,6 +135,12 @@ export const opportunities: Opportunity[] = [
     rank: 5,
     symbol: "IBIT",
     category: "Crypto Bitcoin",
+    currentPrice: "67.12",
+    priceChange: "+1.02",
+    priceChangePercent: "+1.5%",
+    priceTone: "mint",
+    priceSource: "sample-provider-ready",
+    priceAsOf: "Latest bar",
     score: 75,
     accuracy: 59,
     confidence: "Medium",
@@ -125,6 +161,12 @@ export const opportunities: Opportunity[] = [
     rank: 6,
     symbol: "ETHA",
     category: "Crypto Ethereum",
+    currentPrice: "31.44",
+    priceChange: "-0.18",
+    priceChangePercent: "-0.6%",
+    priceTone: "amber",
+    priceSource: "sample-provider-ready",
+    priceAsOf: "Latest bar",
     score: 72,
     accuracy: 57,
     confidence: "Medium",

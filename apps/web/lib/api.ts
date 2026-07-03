@@ -12,6 +12,12 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://voledge-ai-a
 type ApiIntelligence = {
   symbol: string;
   category: string;
+  latest_price: number;
+  price_change: number | null;
+  price_change_percent: number | null;
+  price_timestamp: string;
+  price_provider: string;
+  price_realtime: boolean;
   vol_edge_score: number;
   historical_accuracy: number;
   confidence_level: Opportunity["confidence"];
@@ -59,6 +65,10 @@ function formatPercent(value: number): string {
   return `${sign}${value.toFixed(1)}%`;
 }
 
+function formatPrice(value: number): string {
+  return value.toFixed(value >= 100 ? 2 : 4).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
   const action: Opportunity["action"] =
     item.recommendation === "Strong Sell" || item.recommendation === "Hedge Opportunity"
@@ -73,6 +83,12 @@ function mapOpportunity(item: ApiIntelligence, rank: number): Opportunity {
     rank,
     symbol: item.symbol,
     category: item.category,
+    currentPrice: formatPrice(item.latest_price),
+    priceChange: item.price_change === null ? "N/A" : `${item.price_change > 0 ? "+" : ""}${formatPrice(item.price_change)}`,
+    priceChangePercent: item.price_change_percent === null ? "N/A" : formatPercent(item.price_change_percent),
+    priceTone: item.price_change_percent === null ? "white" : item.price_change_percent >= 0 ? "mint" : "amber",
+    priceSource: item.price_realtime ? `${item.price_provider} live` : `${item.price_provider} delayed`,
+    priceAsOf: item.price_timestamp,
     score: Math.round(item.vol_edge_score),
     accuracy: Math.round(item.historical_accuracy),
     confidence: item.confidence_level,
