@@ -5,8 +5,8 @@ services:
     plan: free
     branch: main
     rootDir: apps/api
-    dockerfilePath: ./apps/api/Dockerfile
-    dockerContext: ./apps/api
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     autoDeployTrigger: commit
     healthCheckPath: /api/status
     envVars:
