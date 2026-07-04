@@ -10,6 +10,7 @@ import {
 } from "@/lib/mock-data";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://voledge-ai-api.onrender.com";
+const API_TIMEOUT_MS = 8000;
 
 type ApiIntelligence = {
   symbol: string;
@@ -115,10 +116,13 @@ async function apiGet<T>(path: string): Promise<T | null> {
     return null;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
   try {
     const response = await fetch(`${apiBaseUrl}${path}`, {
       cache: "no-store",
-      headers: { Accept: "application/json" }
+      headers: { Accept: "application/json" },
+      signal: controller.signal
     });
     if (!response.ok) {
       return null;
@@ -126,6 +130,8 @@ async function apiGet<T>(path: string): Promise<T | null> {
     return (await response.json()) as T;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
