@@ -43,6 +43,11 @@ type ApiIntelligence = {
     key_level?: number | null;
     chart_summary?: string;
     evidence?: string[];
+    analog_count?: number;
+    analog_win_rate?: number;
+    analog_average_return?: number;
+    analog_bias?: "Bullish" | "Bearish" | "Neutral";
+    analog_confidence?: number;
   };
   suggested_entry: number;
   suggested_stop_loss: number;
@@ -328,6 +333,13 @@ export async function getPatternData(): Promise<{ patterns: PatternInsight[]; us
       const historicalAccuracy = Math.round(item.pattern.historical_accuracy ?? item.historical_accuracy);
       const predictionScore = Math.round(item.pattern.prediction_score ?? item.confidence_score ?? quality);
       const keyLevel = typeof item.pattern.key_level === "number" ? formatPrice(item.pattern.key_level) : formatPrice(item.suggested_entry);
+      const analogEvidence =
+        item.pattern.analog_count && item.pattern.analog_count >= 8 && item.pattern.analog_bias && item.pattern.analog_bias !== "Neutral"
+          ? [
+              `historical analogs lean ${item.pattern.analog_bias.toLowerCase()} from ${item.pattern.analog_count} similar setups`,
+              `analog confidence ${Math.round(item.pattern.analog_confidence ?? 0)}/100`
+            ]
+          : [];
       return {
         symbol: item.symbol,
         name: item.pattern.name,
@@ -341,7 +353,7 @@ export async function getPatternData(): Promise<{ patterns: PatternInsight[]; us
         predictedMove: item.pattern.predicted_move ?? (item.pattern.direction === "Bullish" ? "Bullish follow-through" : item.pattern.direction === "Bearish" ? "Bearish follow-through" : "Wait for range break"),
         keyLevel,
         currentPrice: formatPrice(item.latest_price ?? item.suggested_entry),
-        evidence: item.pattern.evidence?.length ? item.pattern.evidence : ["pattern evidence pending"],
+        evidence: item.pattern.evidence?.length ? [...item.pattern.evidence, ...analogEvidence].slice(0, 7) : analogEvidence.length ? analogEvidence : ["pattern evidence pending"],
         summary: item.pattern.chart_summary ?? item.ai_explanation
       };
     })

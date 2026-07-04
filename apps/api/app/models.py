@@ -122,6 +122,11 @@ class PatternSignal(BaseModel):
     key_level: float | None = None
     chart_summary: str = ""
     evidence: list[str] = Field(default_factory=list)
+    analog_count: int = Field(default=0, ge=0)
+    analog_win_rate: float = Field(default=0, ge=0, le=100)
+    analog_average_return: float = 0
+    analog_bias: Literal["Bullish", "Bearish", "Neutral"] = "Neutral"
+    analog_confidence: float = Field(default=0, ge=0, le=100)
 
 
 class Intelligence(BaseModel):

@@ -51,7 +51,21 @@ def test_pattern_detection_returns_required_metrics():
     assert pattern.key_level is not None
     assert pattern.chart_summary
     assert pattern.evidence
+    assert pattern.analog_count >= 0
+    assert 0 <= pattern.analog_win_rate <= 100
+    assert 0 <= pattern.analog_confidence <= 100
+    assert pattern.analog_bias in {"Bullish", "Bearish", "Neutral"}
     assert pattern.confidence_level in {"Low", "Medium", "High"}
+
+
+def test_pattern_detection_uses_historical_analogs_for_directional_prediction():
+    bars = load_ohlcv("TQQQ")
+    stats = calculate_historical_accuracy(bars, quality_threshold=0.004)
+    pattern = detect_primary_pattern(bars, stats.historical_accuracy)
+    assert pattern.analog_count >= 8
+    assert pattern.predicted_move
+    assert "analog" in " ".join(pattern.evidence).lower()
+    assert pattern.breakout_probability != pattern.breakdown_probability or pattern.direction == "Neutral"
 
 
 def test_intelligence_supports_sell_or_early_setup_language():

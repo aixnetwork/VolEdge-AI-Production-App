@@ -367,20 +367,22 @@ def _augment_pattern_prediction(
     institutional_confirmation: float,
     confidence_score: float,
 ) -> PatternSignal:
+    analog_score = pattern.analog_confidence if pattern.analog_count >= 8 else pattern.prediction_score
     prediction_score = (
-        pattern.chart_score * 0.42
-        + historical_accuracy * 0.18
-        + timeframe_alignment * 0.16
-        + institutional_confirmation * 0.14
-        + confidence_score * 0.10
+        pattern.chart_score * 0.34
+        + analog_score * 0.20
+        + historical_accuracy * 0.16
+        + timeframe_alignment * 0.14
+        + institutional_confirmation * 0.10
+        + confidence_score * 0.06
     )
     prediction_score = round(min(100, max(0, prediction_score)), 2)
     if pattern.direction == "Bullish":
-        breakout_probability = prediction_score
-        breakdown_probability = max(0, 100 - prediction_score - 8)
+        breakout_probability = max(pattern.breakout_probability, prediction_score)
+        breakdown_probability = min(pattern.breakdown_probability, max(0, 100 - prediction_score - 8))
     elif pattern.direction == "Bearish":
-        breakdown_probability = prediction_score
-        breakout_probability = max(0, 100 - prediction_score - 8)
+        breakdown_probability = max(pattern.breakdown_probability, prediction_score)
+        breakout_probability = min(pattern.breakout_probability, max(0, 100 - prediction_score - 8))
     else:
         breakout_probability = breakdown_probability = min(54, prediction_score * 0.62)
     evidence = [
@@ -388,12 +390,14 @@ def _augment_pattern_prediction(
         f"multi-timeframe alignment {timeframe_alignment:.0f}/100",
         f"institutional confirmation {institutional_confirmation:.0f}/100",
     ]
+    if pattern.analog_count >= 8:
+        evidence.append(f"AI analog confidence {pattern.analog_confidence:.0f}/100")
     return pattern.model_copy(
         update={
             "prediction_score": prediction_score,
             "breakout_probability": round(breakout_probability, 2),
             "breakdown_probability": round(breakdown_probability, 2),
-            "evidence": evidence[:5],
+            "evidence": evidence[:7],
         }
     )
 

@@ -48,8 +48,12 @@ def test_intelligence_endpoint_includes_manual_approval():
     assert 0 <= body["swing_transition"]["transition_score"] <= 100
     assert body["swing_transition"]["trigger_price"] > 0
     assert body["confidence_level"] in {"Low", "Medium", "High", "Very High"}
-    assert body["suggested_entry"] > body["suggested_stop_loss"]
-    assert body["suggested_target"] > body["suggested_entry"]
+    if body["pattern"]["direction"] == "Bearish":
+        assert body["suggested_stop_loss"] > body["suggested_entry"]
+        assert body["suggested_target"] < body["suggested_entry"]
+    else:
+        assert body["suggested_entry"] > body["suggested_stop_loss"]
+        assert body["suggested_target"] > body["suggested_entry"]
 
 
 def test_market_quote_endpoint_returns_provider_status():
