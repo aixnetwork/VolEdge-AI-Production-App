@@ -8,7 +8,7 @@ from .engines.confirmation import build_institutional_confirmation, build_timefr
 from .engines.market_regime import classify_market_regime
 from .engines.patterns import detect_primary_pattern
 from .engines.voledge_score import adaptive_factor_weights, score_opportunity
-from .market_data import ETF_UNIVERSE
+from .market_data import ANALYSIS_HISTORY_BARS, ETF_UNIVERSE
 from .models import EvidenceReport, Intelligence, PatternSignal, Recommendation, SwingTransitionSignal
 from .providers import get_market_data_provider
 
@@ -94,11 +94,11 @@ def build_intelligence(symbol: str, force_refresh: bool = False) -> Intelligence
 
 def _build_intelligence(symbol: str) -> Intelligence:
     provider = get_market_data_provider()
-    bars = provider.history(symbol)
-    benchmark = provider.history("SPY") if symbol != "SPY" else bars
-    qqq = provider.history("QQQ") if symbol != "QQQ" else bars
+    bars = provider.history(symbol, bars=ANALYSIS_HISTORY_BARS)
+    benchmark = provider.history("SPY", bars=ANALYSIS_HISTORY_BARS) if symbol != "SPY" else bars
+    qqq = provider.history("QQQ", bars=ANALYSIS_HISTORY_BARS) if symbol != "QQQ" else bars
     try:
-        volatility_proxy = provider.history("VIXY")
+        volatility_proxy = provider.history("VIXY", bars=ANALYSIS_HISTORY_BARS)
     except Exception:
         volatility_proxy = None
     market_regime = classify_market_regime(benchmark, qqq, volatility_proxy)

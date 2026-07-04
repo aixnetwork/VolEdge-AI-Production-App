@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .accuracy import score_setup_window
+from ..market_data import ANALYSIS_HISTORY_BARS
 from ..models import BacktestResult, Intelligence
 from ..providers import get_market_data_provider
 
@@ -26,7 +27,7 @@ def summarize_backtest_windows(symbol: str, direction: str = "Bullish") -> list[
 
 
 def _qualified_window_metrics(symbol: str, direction: str, holding_period: int) -> dict[str, float | int | str]:
-    bars = get_market_data_provider().history(symbol)
+    bars = get_market_data_provider().history(symbol, bars=ANALYSIS_HISTORY_BARS)
     metrics = score_setup_window(bars, quality_threshold=0.012, direction=direction, holding_period=holding_period)
     return {
         "window": f"{holding_period} trading days",

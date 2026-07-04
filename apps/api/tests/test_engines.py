@@ -5,6 +5,7 @@ from apps.api.app.engines.patterns import detect_primary_pattern
 from apps.api.app.engines.risk import build_portfolio_risk
 from apps.api.app.engines.sectors import sector_radar
 from apps.api.app.engines.voledge_score import score_opportunity
+from apps.api.app.config import Settings
 from apps.api.app.market_data import load_ohlcv
 from apps.api.app.models import Alert
 from apps.api.app.providers import FinnhubMarketDataProvider, PolygonMarketDataProvider, ProviderNotConfiguredError, TwelveDataMarketDataProvider
@@ -166,6 +167,12 @@ def test_live_provider_requires_api_key():
         except ProviderNotConfiguredError:
             continue
         raise AssertionError(f"{provider.__name__} should require an API key")
+
+
+def test_production_defaults_to_yfinance_when_provider_is_not_set(monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.delenv("MARKET_DATA_PROVIDER", raising=False)
+    assert Settings().market_data_provider == "yfinance"
 
 
 def test_in_memory_store_persists_alert_and_watchlist_symbol():

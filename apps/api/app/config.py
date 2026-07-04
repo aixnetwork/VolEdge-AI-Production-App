@@ -9,7 +9,8 @@ class Settings:
         self.app_name = os.getenv("APP_NAME", "VolEdge AI API")
         self.app_version = os.getenv("APP_VERSION", "0.1.0")
         self.environment = os.getenv("ENVIRONMENT", "development")
-        self.market_data_provider = os.getenv("MARKET_DATA_PROVIDER", "sample-provider-ready")
+        default_provider = "yfinance" if self.environment == "production" else "sample-provider-ready"
+        self.market_data_provider = os.getenv("MARKET_DATA_PROVIDER", default_provider)
         self.polygon_api_key = os.getenv("POLYGON_API_KEY", "")
         self.twelve_data_api_key = os.getenv("TWELVE_DATA_API_KEY", "")
         self.finnhub_api_key = os.getenv("FINNHUB_API_KEY", "")

@@ -6,6 +6,8 @@ from typing import Iterable
 from .models import OhlcvBar
 
 
+ANALYSIS_HISTORY_BARS = 520
+
 ETF_UNIVERSE = {
     "SPY": ("Broad Market", 1),
     "QQQ": ("Broad Market", 1),

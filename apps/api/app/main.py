@@ -11,7 +11,7 @@ from .engines.backtesting import run_signal_backtest, summarize_backtest_windows
 from .engines.patterns import detect_primary_pattern
 from .engines.risk import build_portfolio_risk
 from .engines.sectors import calculate_sector_signal, sector_radar
-from .market_data import ETF_UNIVERSE
+from .market_data import ANALYSIS_HISTORY_BARS, ETF_UNIVERSE
 from .models import Alert, AlertCreate, WatchlistAdd
 from .providers import ProviderNotConfiguredError, get_market_data_provider
 from .services import build_intelligence, intelligence_cache_status, opportunity_radar, warm_intelligence_cache
@@ -97,7 +97,7 @@ def market_history(symbol: str, bars: int = 140):
 @app.get("/api/patterns/{symbol}")
 def patterns(symbol: str):
     def build(value: str):
-        bars = get_market_data_provider().history(value)
+        bars = get_market_data_provider().history(value, bars=ANALYSIS_HISTORY_BARS)
         accuracy = calculate_historical_accuracy(bars, quality_threshold=0.012)
         return detect_primary_pattern(bars, accuracy.historical_accuracy)
 
@@ -106,7 +106,13 @@ def patterns(symbol: str):
 
 @app.get("/api/accuracy/{symbol}")
 def accuracy(symbol: str):
-    return _require_symbol(symbol, lambda value: calculate_historical_accuracy(get_market_data_provider().history(value), quality_threshold=0.012))
+    return _require_symbol(
+        symbol,
+        lambda value: calculate_historical_accuracy(
+            get_market_data_provider().history(value, bars=ANALYSIS_HISTORY_BARS),
+            quality_threshold=0.012,
+        ),
+    )
 
 
 @app.get("/api/backtest/{symbol}")

@@ -179,7 +179,7 @@ class YFinanceMarketDataProvider:
     def history(self, symbol: str, bars: int = 140) -> list[OhlcvBar]:
         yf = _import_yfinance()
         ticker = yf.Ticker(symbol)
-        frame = ticker.history(period="5y", interval="1d", auto_adjust=False)
+        frame = ticker.history(period="5y", interval="1d", auto_adjust=True)
         if frame.empty:
             raise ProviderNotConfiguredError(f"yfinance did not return daily bars for {symbol}.")
 

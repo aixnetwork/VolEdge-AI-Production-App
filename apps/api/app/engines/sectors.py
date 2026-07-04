@@ -3,7 +3,7 @@ from __future__ import annotations
 from time import monotonic
 
 from ..config import get_settings
-from ..market_data import ETF_UNIVERSE
+from ..market_data import ANALYSIS_HISTORY_BARS, ETF_UNIVERSE
 from ..models import Recommendation, SectorSignal
 from ..providers import get_market_data_provider
 
@@ -28,8 +28,8 @@ def calculate_sector_signal(symbol: str, force_refresh: bool = False) -> SectorS
 
 def _calculate_sector_signal(symbol: str) -> SectorSignal:
     provider = get_market_data_provider()
-    bars = provider.history(symbol)
-    spy = provider.history("SPY")
+    bars = provider.history(symbol, bars=ANALYSIS_HISTORY_BARS)
+    spy = provider.history("SPY", bars=ANALYSIS_HISTORY_BARS)
     recent = bars[-14:]
     prior = bars[-42:-14]
     atr_recent = sum(bar.high - bar.low for bar in recent) / len(recent)
