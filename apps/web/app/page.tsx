@@ -49,6 +49,7 @@ export default async function Home() {
           <div className="grid min-w-[260px] grid-cols-2 gap-4">
             <Metric label="Transition Score" value={String(swingTransition.transitionScore ?? swingTransition.score)} tone="mint" />
             <Metric label="Historical Accuracy" value={`${swingTransition.accuracy}%`} tone="amber" />
+            <Metric label="Raw Win Rate" value={`${swingTransition.rawWinRate ?? swingTransition.accuracy}%`} tone="mint" />
             <Metric label="Trigger Gap" value={swingTransition.triggerGap ?? "0.0%"} />
             <Metric label="Trigger Price" value={swingTransition.transitionTrigger ?? swingTransition.entry} />
           </div>
@@ -92,6 +93,14 @@ export default async function Home() {
                     <div className="font-bold text-mint">{item.score}</div>
                   </div>
                   <div>
+                    <div className="text-xs uppercase text-steel">Win Rate</div>
+                    <div className="font-bold text-mint">{item.rawWinRate ?? item.accuracy}%</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase text-steel">Accuracy</div>
+                    <div className="font-bold text-amber">{item.accuracy}%</div>
+                  </div>
+                  <div>
                     <div className="text-xs uppercase text-steel">Risk</div>
                     <div className="font-bold text-amber">{item.riskScore ?? 50}</div>
                   </div>
@@ -124,8 +133,9 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-5">
             <Metric label="Historical Accuracy" value={`${top.accuracy}%`} tone="amber" />
+            <Metric label="Raw Win Rate" value={`${top.rawWinRate ?? top.accuracy}%`} tone="mint" />
             <Metric label="Confidence Score" value={String(top.confidenceScore ?? top.accuracy)} tone="mint" />
             <Metric label="Risk Score" value={String(top.riskScore ?? 50)} tone="amber" />
             <Metric label="Historical Matches" value={String(top.matches)} />

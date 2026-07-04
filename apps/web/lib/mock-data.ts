@@ -310,9 +310,9 @@ export const patternSignals = [
 ];
 
 export const backtestRows = [
-  { window: "3 days", trades: 84, winRate: "64%", avgReturn: "+4.1%", expectedReturn: "+2.6%", drawdown: "-2.2%", profitFactor: "1.54", filter: "Qualified setup only" },
-  { window: "5 days", trades: 84, winRate: "67%", avgReturn: "+8.4%", expectedReturn: "+5.6%", drawdown: "-3.1%", profitFactor: "1.82", filter: "Qualified setup only" },
-  { window: "8 days", trades: 79, winRate: "61%", avgReturn: "+7.2%", expectedReturn: "+4.4%", drawdown: "-4.6%", profitFactor: "1.39", filter: "Qualified setup only" }
+  { window: "3 days", trades: 84, winRate: "64%", rawWinRate: "69%", avgReturn: "+4.1%", expectedReturn: "+2.6%", drawdown: "-2.2%", profitFactor: "1.54", filter: "Qualified setup only" },
+  { window: "5 days", trades: 84, winRate: "67%", rawWinRate: "72%", avgReturn: "+8.4%", expectedReturn: "+5.6%", drawdown: "-3.1%", profitFactor: "1.82", filter: "Qualified setup only" },
+  { window: "8 days", trades: 79, winRate: "61%", rawWinRate: "66%", avgReturn: "+7.2%", expectedReturn: "+4.4%", drawdown: "-4.6%", profitFactor: "1.39", filter: "Qualified setup only" }
 ];
 
 export const alerts = [

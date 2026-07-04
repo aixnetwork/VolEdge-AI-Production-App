@@ -20,15 +20,16 @@ export default async function BacktestResults() {
         </div>
         <div className="mt-5 grid gap-3">
           {backtestRows.map((row) => (
-            <div key={row.window} className="grid gap-3 rounded border border-line bg-ink/45 p-4 md:grid-cols-7">
+            <div key={row.window} className="grid gap-3 rounded border border-line bg-ink/45 p-4 md:grid-cols-8">
               <Metric label="Window" value={row.window} />
               <Metric label="Trades" value={String(row.trades)} />
-              <Metric label="Win Rate" value={row.winRate} tone="amber" />
+              <Metric label="Qualified Accuracy" value={row.winRate} tone="amber" />
+              <Metric label="Raw Win Rate" value={row.rawWinRate ?? row.winRate} tone="mint" />
               <Metric label="Expected Return" value={row.expectedReturn ?? row.avgReturn} tone="mint" />
               <Metric label="Avg Return" value={row.avgReturn} tone="mint" />
               <Metric label="Drawdown" value={row.drawdown} />
               <Metric label="Profit Factor" value={row.profitFactor} />
-              <div className="md:col-span-7">
+              <div className="md:col-span-8">
                 <div className="rounded border border-line bg-panel/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-steel">
                   {row.filter ?? "Qualified setup only"}
                 </div>

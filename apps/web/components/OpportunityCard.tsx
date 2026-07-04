@@ -32,8 +32,9 @@ export function OpportunityCard({ item }: { item: Opportunity }) {
         </div>
         <div className="mt-2 truncate text-xs text-steel">{item.priceSource}</div>
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Metric label="Accuracy" value={`${item.accuracy}%`} tone="amber" />
+        <Metric label="Win Rate" value={`${item.rawWinRate ?? item.accuracy}%`} tone="mint" />
         <Metric label="Confidence" value={String(item.confidenceScore ?? item.accuracy)} tone="mint" />
         <Metric label="Risk" value={String(item.riskScore ?? 50)} tone="amber" />
       </div>

@@ -36,6 +36,7 @@ export default async function EtfDetail({ params }: { params: { symbol: string }
             <Metric label="Latest Price" value={opportunity.currentPrice} />
             <Metric label="Price Change" value={opportunity.priceChangePercent} tone={opportunity.priceTone === "amber" ? "amber" : opportunity.priceTone === "mint" ? "mint" : undefined} />
             <Metric label="Historical Accuracy" value={`${opportunity.accuracy}%`} tone="amber" />
+            <Metric label="Raw Win Rate" value={`${opportunity.rawWinRate ?? opportunity.accuracy}%`} tone="mint" />
             <Metric label="Matches" value={String(opportunity.matches)} />
             <Metric label="Expected Value" value={opportunity.expectedValue ?? opportunity.expectedReturn} tone="mint" />
             <Metric label="Profit Factor" value={opportunity.profitFactor ?? "1.00"} />
