@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Activity, Bell, History, LineChart, Loader2, Radar, Settings, ShieldCheck, Star, Waves } from "lucide-react";
 
 const navItems = [
-  { href: "/", label: "Radar", icon: Radar },
+  { href: "/dashboard", label: "Radar", icon: Radar },
   { href: "/watchlist", label: "Watchlist", icon: Star },
   { href: "/sectors", label: "Sectors", icon: Activity },
   { href: "/accuracy", label: "Accuracy", icon: History },
@@ -29,7 +29,7 @@ export function SidebarNav() {
     <nav className="grid gap-1">
       {navItems.map((item) => {
         const Icon = item.icon;
-        const routeActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+        const routeActive = pathname.startsWith(item.href);
         const pending = pendingHref === item.href && !routeActive;
         const className = routeActive
           ? "flex h-11 cursor-default items-center gap-3 rounded border border-mint/35 bg-mint/12 px-3 text-mint"

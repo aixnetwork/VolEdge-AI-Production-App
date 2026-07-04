@@ -6,7 +6,7 @@ export function AppShell({ title, children }: { title: string; children: React.R
   return (
     <main className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 hidden w-56 border-r border-line bg-ink/90 px-4 py-5 backdrop-blur lg:block">
-        <Link href="/" className="mb-7 flex h-12 items-center gap-3 rounded bg-mint px-3 text-ink">
+        <Link href="/dashboard" className="mb-7 flex h-12 items-center gap-3 rounded bg-mint px-3 text-ink">
           <span className="grid h-7 w-7 place-items-center rounded bg-ink text-sm font-black text-mint">V</span>
           <span className="text-sm font-black">VolEdge AI</span>
         </Link>
